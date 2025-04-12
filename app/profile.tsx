@@ -11,7 +11,7 @@ import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { LogOut, ChevronLeft, Settings, User } from 'lucide-react-native';
+import { ChevronLeftIcon, Cog6ToothIcon, UserIcon, ArrowRightOnRectangleIcon } from 'react-native-heroicons/outline';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -33,18 +33,21 @@ export default function ProfileScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} color={colors.text} />
+          <ChevronLeftIcon size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity>
-          <Settings size={24} color={colors.text} />
+          <Cog6ToothIcon size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.profileSection}>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80' }}
+            source={{ 
+              uri: user?.user_metadata?.avatar_url || 
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'User')}&background=random`
+            }}
             style={styles.profileImage}
           />
           <Text style={styles.name}>{user?.user_metadata?.name || 'User'}</Text>
@@ -54,7 +57,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Settings</Text>
           <TouchableOpacity style={styles.menuItem}>
-            <User size={20} color={colors.text} />
+            <UserIcon size={20} color={colors.text} />
             <Text style={styles.menuText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
@@ -63,7 +66,7 @@ export default function ProfileScreen() {
           style={styles.logoutButton}
           onPress={handleLogout}
         >
-          <LogOut size={20} color={colors.danger} />
+          <ArrowRightOnRectangleIcon size={20} color={colors.danger} />
           <Text style={[styles.menuText, { color: colors.danger }]}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>

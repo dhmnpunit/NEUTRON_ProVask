@@ -1,51 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  TextInput
+  TextInput,
 } from 'react-native';
 import { colors } from '@/constants/colors';
-import { useHealthStore } from '@/store/health-store';
-import { LogCard } from '@/components/LogCard';
-import { JournalEntry, MoodType } from '@/types/health';
-import { Plus, Search, Filter, Coffee, Utensils, Moon, Droplet } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { PlusIcon, MagnifyingGlassIcon, FunnelIcon, BeakerIcon, CloudIcon, MoonIcon } from 'react-native-heroicons/outline';
+import { JournalEntry } from '@/types/health';
+import { getJournalEntries } from '@/services/journalService';
 
 export default function LogsScreen() {
   const router = useRouter();
-  const { journalEntries } = useHealthStore();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Filter entries based on search
-  const filteredEntries = journalEntries.filter(entry => {
-    return searchQuery === '' || 
-      entry.content.toLowerCase().includes(searchQuery.toLowerCase());
-  });
-  
-  // Get mood emoji
-  const getMoodEmoji = (mood?: MoodType): string => {
-    switch (mood) {
-      case 'great': return '😄';
-      case 'good': return '🙂';
-      case 'neutral': return '😐';
-      case 'bad': return '🙁';
-      case 'terrible': return '😫';
-      default: return '😐';
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchEntries();
+    }
+  }, [user]);
+
+  const fetchEntries = async () => {
+    try {
+      setLoading(true);
+      const data = await getJournalEntries(user!.id);
+      setEntries(data);
+    } catch (error) {
+      console.error('Error fetching entries:', error);
+    } finally {
+      setLoading(false);
     }
   };
-  
-  const handleEntryPress = (entry: JournalEntry) => {
-    // Navigate to entry detail
-    router.push({
-      pathname: '/logs/[id]',
-      params: { id: entry.id }
-    });
-  };
-  
+
+  const filteredEntries = entries.filter(entry => 
+    entry.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    entry.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <ScreenWrapper>
       <View style={styles.header}>
@@ -54,12 +53,12 @@ export default function LogsScreen() {
           style={styles.addButton}
           onPress={() => router.push('/logs/add')}
         >
-          <Plus size={20} color="#FFFFFF" />
+          <PlusIcon size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       
       <View style={styles.searchContainer}>
-        <Search size={20} color={colors.textTertiary} style={styles.searchIcon} />
+        <MagnifyingGlassIcon size={20} color={colors.textTertiary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="search your logs..."
@@ -68,7 +67,7 @@ export default function LogsScreen() {
           onChangeText={setSearchQuery}
         />
         <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color={colors.textSecondary} />
+          <FunnelIcon size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
       
@@ -77,49 +76,48 @@ export default function LogsScreen() {
           <Text style={[styles.categoryText, styles.categoryTextActive]}>All</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.categoryButton}>
-          <Utensils size={16} color={colors.textSecondary} style={styles.categoryIcon} />
+          <BeakerIcon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
           <Text style={styles.categoryText}>Food</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.categoryButton}>
-          <Droplet size={16} color={colors.textSecondary} style={styles.categoryIcon} />
+          <CloudIcon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
           <Text style={styles.categoryText}>Water</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.categoryButton}>
-          <Moon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
+          <MoonIcon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
           <Text style={styles.categoryText}>Sleep</Text>
         </TouchableOpacity>
       </View>
-      
-      <ScrollView 
-        style={styles.entriesContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredEntries.length > 0 ? (
-          filteredEntries.map((entry) => (
-            <LogCard
-              key={entry.id}
-              title={entry.date}
-              feeling={entry.mood}
-              feelingEmoji={getMoodEmoji(entry.mood)}
-              notes={entry.content}
-              onPress={() => handleEntryPress(entry)}
-            />
-          ))
+
+      <ScrollView style={styles.entriesContainer}>
+        {loading ? (
+          <Text style={styles.loadingText}>Loading entries...</Text>
+        ) : filteredEntries.length === 0 ? (
+          <Text style={styles.emptyText}>
+            {searchQuery ? 'No entries found' : 'No entries yet. Start logging your health!'}
+          </Text>
         ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No logs found</Text>
-            <Text style={styles.emptyText}>
-              {searchQuery
-                ? "Try adjusting your search"
-                : "Start logging to track your health journey"}
-            </Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => router.push('/logs/add')}
+          filteredEntries.map(entry => (
+            <TouchableOpacity 
+              key={entry.id} 
+              style={styles.entryCard}
+              onPress={() => router.push(`/logs/${entry.id}`)}
             >
-              <Text style={styles.emptyButtonText}>Create First Log</Text>
+              <Text style={styles.entryDate}>
+                {new Date(entry.created_at).toLocaleDateString()}
+              </Text>
+              <Text style={styles.entryContent} numberOfLines={2}>
+                {entry.content}
+              </Text>
+              <View style={styles.entryTags}>
+                {entry.tags.map((tag, index) => (
+                  <View key={index} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
             </TouchableOpacity>
-          </View>
+          ))
         )}
       </ScrollView>
     </ScreenWrapper>
@@ -142,47 +140,45 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     backgroundColor: colors.primary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 12,
-    height: 44,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    height: 44,
+    height: 40,
     color: colors.text,
-    fontSize: 16,
   },
   filterButton: {
     padding: 8,
   },
   categoriesContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    marginBottom: 12,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 16,
-    marginHorizontal: 4,
+    marginRight: 8,
+    backgroundColor: colors.card,
   },
   categoryButtonActive: {
     backgroundColor: colors.primary,
@@ -196,39 +192,51 @@ const styles = StyleSheet.create({
   },
   categoryTextActive: {
     color: '#FFFFFF',
-    fontWeight: '500',
   },
   entriesContainer: {
     flex: 1,
     padding: 16,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    marginTop: 40,
+  entryCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  entryDate: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  entryContent: {
+    fontSize: 16,
     color: colors.text,
     marginBottom: 8,
   },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSecondary,
+  entryTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  tag: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    fontSize: 12,
+    color: colors.primary,
+  },
+  loadingText: {
     textAlign: 'center',
-    marginBottom: 24,
+    color: colors.textSecondary,
+    marginTop: 32,
   },
-  emptyButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  emptyButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
+  emptyText: {
+    textAlign: 'center',
+    color: colors.textSecondary,
+    marginTop: 32,
   },
 });

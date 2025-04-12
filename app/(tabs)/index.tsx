@@ -13,11 +13,11 @@ import { StreakCard } from '@/components/StreakCard';
 import { MoodChart } from '@/components/MoodChart';
 import { ActionButton } from '@/components/ActionButton';
 import { 
-  Plus, 
-  Settings,
-  Moon,
-  ChevronRight
-} from 'lucide-react-native';
+  PlusIcon, 
+  Cog6ToothIcon,
+  MoonIcon,
+  ChevronRightIcon
+} from 'react-native-heroicons/outline';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useAuth } from '@/context/AuthContext';
@@ -45,14 +45,17 @@ export default function DashboardScreen() {
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/profile')}>
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80' }}
+              source={{ 
+                uri: user?.user_metadata?.avatar_url || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'User')}&background=random`
+              }}
               style={styles.avatar}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{user?.user_metadata?.name || 'your health'}</Text>
         </View>
         <TouchableOpacity onPress={() => router.push('/profile')}>
-          <Settings size={24} color={colors.text} />
+          <Cog6ToothIcon size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
       
@@ -68,7 +71,7 @@ export default function DashboardScreen() {
         <View style={styles.logButtonContainer}>
           <ActionButton
             title="Log Today's Health"
-            icon={<Plus size={18} color="#FFFFFF" />}
+            icon={<PlusIcon size={18} color="#FFFFFF" />}
             onPress={() => router.push('/logs/add')}
             primary
             fullWidth
@@ -88,13 +91,13 @@ export default function DashboardScreen() {
           
           <TouchableOpacity style={styles.recommendationItem}>
             <View style={styles.recommendationContent}>
-              <Moon size={20} color={colors.sleep} style={styles.recommendationIcon} />
+              <MoonIcon size={20} color={colors.sleep} style={styles.recommendationIcon} />
               <View>
                 <Text style={styles.recommendationText}>Go to bed 30 minutes earlier tonight</Text>
                 <Text style={styles.recommendationSubtext}>Improve your sleep quality</Text>
               </View>
             </View>
-            <ChevronRight size={16} color={colors.textSecondary} />
+            <ChevronRightIcon size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </ScrollView>
