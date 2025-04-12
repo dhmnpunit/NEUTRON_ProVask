@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '@/constants/colors';
-import { LucideIcon } from 'lucide-react-native';
+import { typography, spacing, radius, shadows, iconSizes } from '@/constants/design';
+import { GradientCard, CardPattern } from './VisualEnhancements';
 
 interface HealthMetricCardProps {
   title: string;
@@ -24,62 +25,72 @@ export const HealthMetricCard: React.FC<HealthMetricCardProps> = ({
 }) => {
   return (
     <TouchableOpacity 
-      style={[styles.container, { backgroundColor: lightColor }]} 
+      style={styles.container} 
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: color }]}>
-          {icon}
+      <GradientCard 
+        style={styles.card}
+        startColor={`${lightColor}90`}
+        endColor={`${lightColor}50`}
+      >
+        <CardPattern patternColor={`${color}15`} />
+        <View style={styles.content}>
+          <View style={[styles.iconContainer, { backgroundColor: color }]}>
+            {icon}
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.value, { color }]}>{value}</Text>
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          </View>
         </View>
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={[styles.value, { color }]}>{value}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-        </View>
-      </View>
+      </GradientCard>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
+    marginBottom: spacing.md,
+    borderRadius: radius.medium,
+    ...shadows.small,
+  },
+  card: {
+    overflow: 'hidden',
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: spacing.md,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: spacing.xl + spacing.md,
+    height: spacing.xl + spacing.md,
+    borderRadius: radius.small,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.md,
+    ...shadows.small,
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 4,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
+    color: typography.caption.color,
+    marginBottom: spacing.xs,
   },
   value: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: typography.h2.fontSize,
+    fontWeight: '700',
+    marginVertical: spacing.xs / 2,
   },
   subtitle: {
-    fontSize: 12,
-    color: colors.textTertiary,
-    marginTop: 2,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
+    color: colors.textSecondary,
+    marginTop: spacing.xs / 2,
   },
 });

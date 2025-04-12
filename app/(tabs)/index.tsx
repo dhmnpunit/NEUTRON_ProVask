@@ -10,7 +10,7 @@ import {
 import { colors } from '@/constants/colors';
 import { useHealthStore } from '@/store/health-store';
 import { StreakCard } from '@/components/StreakCard';
-import { MoodChart } from '@/components/MoodChart';
+import { HealthTrends } from '@/components/HealthTrends';
 import { ActionButton } from '@/components/ActionButton';
 import { 
   PlusIcon, 
@@ -78,11 +78,7 @@ export default function DashboardScreen() {
           />
         </View>
         
-        <MoodChart
-          data={moodData}
-          title="7 day mood trends"
-          subtitle="How your health choices made you feel"
-        />
+        <HealthTrends entries={[]} />
         
         <View style={styles.recommendationsContainer}>
           <View style={styles.recommendationHeader}>

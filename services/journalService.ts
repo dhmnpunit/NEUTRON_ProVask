@@ -21,23 +21,27 @@ export interface CreateJournalEntryParams {
   content: string;
   mood?: MoodType;
   health_metrics: HealthMetrics;
-  tags: string[];
+  tags?: string[];
   symptoms: string[];
 }
 
-export const addJournalEntry = async (entry: CreateJournalEntryParams) => {
+export const addJournalEntry = async (params: CreateJournalEntryParams): Promise<JournalEntry> => {
   const { data, error } = await supabase
     .from('journal_entries')
-    .insert([entry])
+    .insert({
+      user_id: params.user_id,
+      content: params.content,
+      mood: params.mood,
+      health_metrics: params.health_metrics,
+      tags: params.tags || [],
+      symptoms: params.symptoms,
+      created_at: new Date().toISOString(),
+    })
     .select()
     .single();
 
-  if (error) {
-    console.error('Error adding journal entry:', error);
-    throw error;
-  }
-
-  return data as JournalEntry;
+  if (error) throw error;
+  return data;
 };
 
 export const updateJournalEntry = async (id: string, updates: Partial<JournalEntry>) => {
