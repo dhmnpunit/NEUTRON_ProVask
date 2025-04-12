@@ -5,8 +5,8 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  SafeAreaView,
-  TextInput
+  TextInput,
+  Switch,
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useHealthStore } from '@/store/health-store';
@@ -16,6 +16,7 @@ import { MoodSelector } from '@/components/MoodSelector';
 import { RatingSelector } from '@/components/RatingSelector';
 import { ActionButton } from '@/components/ActionButton';
 import { ChevronLeft } from 'lucide-react-native';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
 
 export default function AddJournalEntryScreen() {
   const router = useRouter();
@@ -27,12 +28,24 @@ export default function AddJournalEntryScreen() {
   const [mentalClarity, setMentalClarity] = useState(4);
   const [energyLevel, setEnergyLevel] = useState(4);
   
+  const [symptoms, setSymptoms] = useState('');
+  const [exerciseMinutes, setExerciseMinutes] = useState('');
+  const [waterGlasses, setWaterGlasses] = useState('');
+  const [hasHeadache, setHasHeadache] = useState(false);
+  const [hasBodyPain, setHasBodyPain] = useState(false);
+  const [hasFever, setHasFever] = useState(false);
+  
   const handleSave = () => {
     if (!content.trim()) {
       return; // Don't save empty entries
     }
     
-    // Create new journal entry
+    const activeSymptoms = [];
+    if (hasHeadache) activeSymptoms.push('headache');
+    if (hasBodyPain) activeSymptoms.push('body pain');
+    if (hasFever) activeSymptoms.push('fever');
+    if (symptoms.trim()) activeSymptoms.push(...symptoms.split(',').map(s => s.trim()));
+    
     addJournalEntry({
       date: new Date().toISOString().split('T')[0],
       content: content.trim(),
@@ -41,15 +54,22 @@ export default function AddJournalEntryScreen() {
         (tag === 'sleep' && sleepQuality !== 4) ||
         (tag === 'energy' && energyLevel !== 4)
       ),
-      mood
+      mood,
+      healthMetrics: {
+        sleepQuality,
+        mentalClarity,
+        energyLevel,
+        exerciseMinutes: parseInt(exerciseMinutes) || 0,
+        waterGlasses: parseInt(waterGlasses) || 0,
+      },
+      symptoms: activeSymptoms,
     });
     
-    // Navigate back
     router.back();
   };
   
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       <Stack.Screen options={{ headerShown: false }} />
       
       <View style={styles.header}>
@@ -80,6 +100,77 @@ export default function AddJournalEntryScreen() {
             placeholderTextColor={colors.textTertiary}
           />
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Daily Activities</Text>
+          
+          <View style={styles.metricInput}>
+            <Text style={styles.metricLabel}>Exercise (minutes)</Text>
+            <TextInput
+              style={styles.numberInput}
+              value={exerciseMinutes}
+              onChangeText={setExerciseMinutes}
+              keyboardType="number-pad"
+              placeholder="0"
+              placeholderTextColor={colors.textTertiary}
+            />
+          </View>
+
+          <View style={styles.metricInput}>
+            <Text style={styles.metricLabel}>Water (glasses)</Text>
+            <TextInput
+              style={styles.numberInput}
+              value={waterGlasses}
+              onChangeText={setWaterGlasses}
+              keyboardType="number-pad"
+              placeholder="0"
+              placeholderTextColor={colors.textTertiary}
+            />
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Common Symptoms</Text>
+          
+          <View style={styles.symptomToggle}>
+            <Text style={styles.symptomLabel}>Headache</Text>
+            <Switch
+              value={hasHeadache}
+              onValueChange={setHasHeadache}
+              trackColor={{ false: colors.border, true: colors.primary }}
+            />
+          </View>
+
+          <View style={styles.symptomToggle}>
+            <Text style={styles.symptomLabel}>Body Pain</Text>
+            <Switch
+              value={hasBodyPain}
+              onValueChange={setHasBodyPain}
+              trackColor={{ false: colors.border, true: colors.primary }}
+            />
+          </View>
+
+          <View style={styles.symptomToggle}>
+            <Text style={styles.symptomLabel}>Fever</Text>
+            <Switch
+              value={hasFever}
+              onValueChange={setHasFever}
+              trackColor={{ false: colors.border, true: colors.primary }}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Other Symptoms</Text>
+            <TextInput
+              style={[styles.textInput, { minHeight: 60 }]}
+              value={symptoms}
+              onChangeText={setSymptoms}
+              multiline
+              placeholder="Enter any other symptoms, separated by commas"
+              placeholderTextColor={colors.textTertiary}
+            />
+          </View>
+        </View>
         
         <RatingSelector
           title="sleep quality"
@@ -102,22 +193,20 @@ export default function AddJournalEntryScreen() {
           onChange={setEnergyLevel}
         />
         
-        <ActionButton
-          title="Save Health Log"
-          onPress={handleSave}
-          primary
-          fullWidth
-        />
+        <View style={styles.saveButtonContainer}>
+          <ActionButton
+            title="Save Health Log"
+            onPress={handleSave}
+            primary
+            fullWidth
+          />
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -142,6 +231,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
   inputContainer: {
     marginBottom: 24,
   },
@@ -159,5 +257,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     textAlignVertical: 'top',
+  },
+  metricInput: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  metricLabel: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  numberInput: {
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 8,
+    width: 80,
+    textAlign: 'center',
+    fontSize: 16,
+    color: colors.text,
+  },
+  symptomToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  symptomLabel: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  saveButtonContainer: {
+    marginBottom: 32,
   },
 });

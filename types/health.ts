@@ -1,4 +1,4 @@
-export type MoodType = 'great' | 'good' | 'neutral' | 'bad' | 'terrible';
+export type MoodType = 'terrible' | 'bad' | 'neutral' | 'good' | 'great';
 
 export interface SleepData {
   date: string;
@@ -44,12 +44,22 @@ export interface NutritionData {
   water: number; // glasses
 }
 
+export interface HealthMetrics {
+  sleepQuality: number;
+  mentalClarity: number;
+  energyLevel: number;
+  exerciseMinutes: number;
+  waterGlasses: number;
+}
+
 export interface JournalEntry {
   id: string;
   date: string;
   content: string;
   tags: string[];
   mood?: MoodType;
+  healthMetrics: HealthMetrics;
+  symptoms: string[];
 }
 
 export interface HealthGoal {

@@ -5,22 +5,17 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  SafeAreaView,
   Image,
-  StatusBar,
-  Platform
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useHealthStore } from '@/store/health-store';
 import { StreakCard } from '@/components/StreakCard';
 import { MoodChart } from '@/components/MoodChart';
 import { ActionButton } from '@/components/ActionButton';
-import { LogCard } from '@/components/LogCard';
 import { 
   Plus, 
   Settings,
   Moon,
-  Smile,
   ChevronRight
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -34,7 +29,6 @@ export default function DashboardScreen() {
     moodData, 
     activityData,
     userProfile,
-    journalEntries
   } = useHealthStore();
   
   // Get the latest data
@@ -42,18 +36,6 @@ export default function DashboardScreen() {
   const latestWater = waterData[0];
   const latestMood = moodData[0];
   const latestActivity = activityData[0];
-  
-  // Get mood emoji
-  const getMoodEmoji = (mood: string): string => {
-    switch (mood) {
-      case 'great': return '😄';
-      case 'good': return '🙂';
-      case 'neutral': return '😐';
-      case 'bad': return '🙁';
-      case 'terrible': return '😫';
-      default: return '😐';
-    }
-  };
   
   return (
     <ScreenWrapper>
@@ -94,31 +76,6 @@ export default function DashboardScreen() {
           title="7 day mood trends"
           subtitle="How your health choices made you feel"
         />
-        
-        <View style={styles.recentLogsHeader}>
-          <Text style={styles.sectionTitle}>Recent Logs</Text>
-          <TouchableOpacity 
-            style={styles.viewAllButton}
-            onPress={() => router.push('/logs')}
-          >
-            <Text style={styles.viewAllText}>View All</Text>
-            <ChevronRight size={16} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-        
-        {journalEntries.slice(0, 2).map((entry) => (
-          <LogCard
-            key={entry.id}
-            title={entry.date}
-            feeling={entry.mood}
-            feelingEmoji={getMoodEmoji(entry.mood || 'neutral')}
-            notes={entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : '')}
-            onPress={() => router.push({
-              pathname: '/logs/[id]',
-              params: { id: entry.id }
-            })}
-          />
-        ))}
         
         <View style={styles.recommendationsContainer}>
           <View style={styles.recommendationHeader}>
@@ -172,26 +129,6 @@ const styles = StyleSheet.create({
   },
   logButtonContainer: {
     marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  recentLogsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  viewAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  viewAllText: {
-    fontSize: 14,
-    color: colors.primary,
-    marginRight: 4,
   },
   recommendationsContainer: {
     backgroundColor: colors.card,
