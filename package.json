@@ -53,5 +53,8 @@
         "babel-plugin-module-resolver": "^5.0.2",
         "typescript": "~5.8.2"
     },
-    "private": true
+    "private": true,
+    "script": {
+        "getfonts": "node -e \"const fs=require('fs'); const https=require('https'); const url='https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600;700&display=swap'; https.get(url, {headers: {'User-Agent': 'Mozilla/5.0'}}, (res) => { let data = ''; res.on('data', (chunk) => data += chunk); res.on('end', () => fs.writeFileSync('font.css', data)); })\""
+    }
 }

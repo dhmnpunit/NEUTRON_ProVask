@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Plus, Heart, Info, Clock, ChevronRight, Search } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
-import { typography, spacing, radius, shadows, iconSizes } from '@/constants/design';
+import { typography, spacing, radius, shadows, iconSizes, fonts } from '@/constants/design';
 import { PrimaryButton } from './PrimaryButton';
 import { FloatingActionButton } from './FloatingActionButton';
 import { ScreenHeader } from './ScreenHeader';
@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
     ...typography.h2,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
+    fontFamily: fonts.headingBold,
   },
   showcaseCard: {
     backgroundColor: colors.card,

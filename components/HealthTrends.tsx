@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { colors } from '@/constants/colors';
+import { fonts } from '@/constants/design';
 import { JournalEntry } from '@/types/health';
 
 interface HealthIssue {
@@ -95,6 +96,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
+    fontFamily: fonts.headingSemiBold,
     color: colors.text || '#000000',
     marginBottom: 4,
   },
@@ -116,6 +118,7 @@ const styles = StyleSheet.create({
   day: {
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: fonts.headingSemiBold,
     color: colors.text || '#000000',
     marginBottom: 4,
   },
@@ -129,6 +132,7 @@ const styles = StyleSheet.create({
   issueText: {
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: fonts.headingSemiBold,
     color: colors.text || '#000000',
     marginBottom: 2,
   },

@@ -1,29 +1,51 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
 import { colors } from './colors';
 
+// Font family constants
+export const fonts = {
+  // Rethink Sans for headings
+  headingRegular: 'RethinkSans-Regular',
+  headingMedium: 'RethinkSans-Medium',
+  headingSemiBold: 'RethinkSans-SemiBold',
+  headingBold: 'RethinkSans-Bold',
+  
+  // Geist Sans for body text
+  regular: 'GeistSans-Regular',
+  medium: 'GeistSans-Medium',
+  semiBold: 'GeistSans-SemiBold',
+  bold: 'GeistSans-Bold',
+  black: 'GeistSans-Black',
+  light: 'GeistSans-Light',
+  mono: 'Geist-Mono',
+};
+
 // Typography
 export const typography = StyleSheet.create({
   h1: {
     fontSize: 24,
     fontWeight: '700',
+    fontFamily: fonts.headingBold,
     color: colors.text,
     letterSpacing: -0.5,
   },
   h2: {
     fontSize: 20,
     fontWeight: '700',
+    fontFamily: fonts.headingBold,
     color: colors.text,
     letterSpacing: -0.4,
   },
   h3: {
     fontSize: 18,
     fontWeight: '600',
+    fontFamily: fonts.headingSemiBold,
     color: colors.text,
     letterSpacing: -0.3,
   },
   body: {
     fontSize: 16,
     fontWeight: '400',
+    fontFamily: fonts.regular,
     color: colors.text,
     lineHeight: 24,
     letterSpacing: 0.1,
@@ -31,6 +53,7 @@ export const typography = StyleSheet.create({
   bodySmall: {
     fontSize: 14,
     fontWeight: '400',
+    fontFamily: fonts.regular,
     color: colors.text,
     lineHeight: 20,
     letterSpacing: 0.15,
@@ -38,12 +61,14 @@ export const typography = StyleSheet.create({
   caption: {
     fontSize: 12,
     fontWeight: '400',
+    fontFamily: fonts.regular,
     color: colors.textSecondary,
     letterSpacing: 0.2,
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textSecondary,
     letterSpacing: 0.15,
   },

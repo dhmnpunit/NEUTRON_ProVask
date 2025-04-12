@@ -2,8 +2,9 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { HomeIcon, BookOpenIcon } from 'react-native-heroicons/outline';
-import { View, Platform, StatusBar } from 'react-native';
+import { View, Platform, StatusBar, StyleSheet } from 'react-native';
 import { BarChart3, Dices } from 'lucide-react-native';
+import { fonts } from "@/constants/design";
 
 const TabBarBackground = () => {
   const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
@@ -18,6 +19,19 @@ const TabBarBackground = () => {
     }} />
   );
 };
+
+const styles = StyleSheet.create({
+  tabBarBackground: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 50,
+    backgroundColor: colors.background,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+  },
+});
 
 export default function TabLayout() {
   return (
@@ -37,6 +51,7 @@ export default function TabLayout() {
           tabBarLabelStyle: {
             fontSize: 12,
             fontWeight: '500',
+            fontFamily: fonts.headingMedium,
           },
           headerStyle: {
             backgroundColor: colors.background,
@@ -48,6 +63,7 @@ export default function TabLayout() {
           headerTitleStyle: {
             fontWeight: '600',
             fontSize: 18,
+            fontFamily: fonts.headingSemiBold,
           },
           headerTintColor: colors.text,
         }}

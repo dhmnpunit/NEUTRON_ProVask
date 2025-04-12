@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Pressable, Animated } from 'react-native';
 import { colors } from '@/constants/colors';
 import { X, Tag, Droplet, Moon, Dumbbell } from 'lucide-react-native';
-import { typography, spacing, radius, shadows, iconSizes } from '@/constants/design';
+import { typography, spacing, radius, shadows, iconSizes, fonts } from '@/constants/design';
 import { Divider, GradientCard, CardPattern } from './VisualEnhancements';
 
 interface LogCardProps {
@@ -168,26 +168,32 @@ export const LogCard: React.FC<LogCardProps> = ({
               )}
               
               {/* Health metrics in a row */}
-              {(metrics?.water || metrics?.sleep || metrics?.exercise) && (
+              {(metrics?.water !== undefined || metrics?.sleep !== undefined || metrics?.exercise !== undefined) && (
                 <View style={styles.metricsRow}>
-                  {metrics?.water && (
+                  {metrics?.water !== undefined && (
                     <View style={styles.metricItem}>
                       <Droplet size={14} color={colors.info} />
-                      <Text style={[styles.metricValue, { color: colors.info }]}>{metrics.water}</Text>
+                      <Text style={[styles.metricValue, { color: colors.info }]}>
+                        {String(metrics.water)}
+                      </Text>
                     </View>
                   )}
                   
-                  {metrics?.sleep && (
+                  {metrics?.sleep !== undefined && (
                     <View style={styles.metricItem}>
                       <Moon size={14} color={colors.success} />
-                      <Text style={[styles.metricValue, { color: colors.success }]}>{metrics.sleep}</Text>
+                      <Text style={[styles.metricValue, { color: colors.success }]}>
+                        {String(metrics.sleep)}
+                      </Text>
                     </View>
                   )}
                   
-                  {metrics?.exercise && (
+                  {metrics?.exercise !== undefined && (
                     <View style={styles.metricItem}>
                       <Dumbbell size={14} color={colors.warning} />
-                      <Text style={[styles.metricValue, { color: colors.warning }]}>{metrics.exercise}</Text>
+                      <Text style={[styles.metricValue, { color: colors.warning }]}>
+                        {String(metrics.exercise)}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -251,6 +257,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.h3.fontWeight,
     color: typography.h3.color,
     letterSpacing: -0.3,
+    fontFamily: fonts.headingBold,
   },
   dateMonth: {
     fontSize: typography.caption.fontSize,

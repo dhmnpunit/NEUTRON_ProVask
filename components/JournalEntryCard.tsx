@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { format } from 'date-fns';
 import { colors } from '@/constants/colors';
-import { typography, spacing, radius } from '@/constants/design';
+import { typography, spacing, radius, fonts } from '@/constants/design';
 import { GradientCard, AccentLine, CardPattern } from './VisualEnhancements';
 
 export interface JournalEntryCardProps {
@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
     fontWeight: 'bold',
+    fontFamily: fonts.headingBold,
   },
   month: {
     ...typography.caption,
@@ -163,10 +164,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   title: {
-    ...typography.subtitle,
+    ...typography.h3,
     flex: 1,
     color: colors.text,
     fontWeight: 'bold',
+    fontFamily: fonts.headingBold,
   },
   moodEmoji: {
     fontSize: 18,

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
-import { typography, spacing, radius, shadows, iconSizes } from '@/constants/design';
+import { typography, spacing, radius, shadows, iconSizes, fonts } from '@/constants/design';
 import { GradientCard } from './VisualEnhancements';
 
 interface ScreenHeaderProps {
@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
   title: {
     ...typography.h2,
     fontWeight: '700',
+    fontFamily: fonts.headingBold,
   },
   titleWithBack: {
     marginLeft: spacing.xs,
