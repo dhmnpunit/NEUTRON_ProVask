@@ -21,6 +21,7 @@ import {
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useAuth } from '@/context/AuthContext';
+import { HealthAssistantButton } from '@/components/HealthAssistantButton';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -85,6 +86,20 @@ export default function DashboardScreen() {
             <Text style={styles.recommendationTitle}>recommended for you</Text>
           </View>
           
+          <TouchableOpacity 
+            style={styles.recommendationItem}
+            onPress={() => router.push('/(tabs)/chat')}
+          >
+            <View style={styles.recommendationContent}>
+              <MoonIcon size={20} color={colors.sleep} style={styles.recommendationIcon} />
+              <View>
+                <Text style={styles.recommendationText}>Get personalized health advice</Text>
+                <Text style={styles.recommendationSubtext}>Chat with your health assistant</Text>
+              </View>
+            </View>
+            <ChevronRightIcon size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+          
           <TouchableOpacity style={styles.recommendationItem}>
             <View style={styles.recommendationContent}>
               <MoonIcon size={20} color={colors.sleep} style={styles.recommendationIcon} />
@@ -97,6 +112,8 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      
+      <HealthAssistantButton showLabel size="medium" />
     </ScreenWrapper>
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -11,11 +11,40 @@ import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, Stack } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Cog6ToothIcon, UserIcon, ArrowRightOnRectangleIcon, ChevronRightIcon } from 'react-native-heroicons/outline';
+import { Cog6ToothIcon, UserIcon, ArrowRightOnRectangleIcon, ChevronRightIcon, ShieldCheckIcon } from 'react-native-heroicons/outline';
+import { supabase } from '@/lib/supabase';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    // Check if user is admin
+    if (user) {
+      checkAdminAccess();
+    }
+  }, [user]);
+  
+  // Check if current user has admin access
+  const checkAdminAccess = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+      
+      if (!error && data) {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error('Error checking admin access:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -87,8 +116,23 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {isAdmin && (
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => router.push('/profile/admin-settings')}
+          >
+            <View style={styles.settingItemLeft}>
+              <View style={[styles.settingIconContainer, { backgroundColor: colors.primaryLight }]}>
+                <ShieldCheckIcon size={20} color={colors.primary} />
+              </View>
+              <Text style={styles.settingText}>Admin Settings</Text>
+            </View>
+            <ChevronRightIcon size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+        
         <TouchableOpacity 
-          style={styles.logoutButton}
+          style={[styles.settingItem, styles.dangerItem]}
           onPress={handleLogout}
         >
           <View style={styles.menuItemLeft}>
@@ -210,5 +254,44 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  settingsContainer: {
+    marginTop: 24,
+  },
+  settingsHeading: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  settingItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  settingText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  dangerItem: {
+    backgroundColor: colors.danger + '20',
   },
 }); 

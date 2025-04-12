@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { HomeIcon, BookOpenIcon } from 'react-native-heroicons/outline';
+import { HomeIcon, BookOpenIcon, ChatBubbleLeftRightIcon } from 'react-native-heroicons/outline';
 import { View, Platform, StatusBar, StyleSheet } from 'react-native';
 import { BarChart3, Dices } from 'lucide-react-native';
 import { fonts } from "@/constants/design";
@@ -85,6 +85,16 @@ export default function TabLayout() {
             tabBarLabel: 'Journal',
             tabBarIcon: ({ color, size }) => (
               <BookOpenIcon size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="chat"
+          options={{
+            title: 'Assistant',
+            tabBarLabel: 'Assistant',
+            tabBarIcon: ({ color, size }) => (
+              <ChatBubbleLeftRightIcon size={size} color={color} />
             ),
           }}
         />
