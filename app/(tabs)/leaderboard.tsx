@@ -14,6 +14,7 @@ import { useHealthStore } from '@/store/health-store';
 import { LeaderboardItem } from '@/components/LeaderboardItem';
 import { AchievementCard } from '@/components/AchievementCard';
 import { Trophy, Users, Award, ChevronRight } from 'lucide-react-native';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
 
 type LeaderboardTab = 'global' | 'friends' | 'achievements';
 
@@ -22,7 +23,7 @@ export default function LeaderboardScreen() {
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('global');
   
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       <View style={styles.tabs}>
         <TouchableOpacity
           style={[
@@ -191,7 +192,7 @@ export default function LeaderboardScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

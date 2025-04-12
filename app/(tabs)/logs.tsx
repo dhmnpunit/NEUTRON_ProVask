@@ -5,7 +5,6 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  SafeAreaView,
   TextInput
 } from 'react-native';
 import { colors } from '@/constants/colors';
@@ -14,6 +13,7 @@ import { LogCard } from '@/components/LogCard';
 import { JournalEntry, MoodType } from '@/types/health';
 import { Plus, Search, Filter, Coffee, Utensils, Moon, Droplet } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
 
 export default function LogsScreen() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export default function LogsScreen() {
   };
   
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>your health logs</Text>
         <TouchableOpacity 
@@ -122,15 +122,11 @@ export default function LogsScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

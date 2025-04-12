@@ -6,7 +6,9 @@ import {
   ScrollView, 
   TouchableOpacity,
   SafeAreaView,
-  Image
+  Image,
+  StatusBar,
+  Platform
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useHealthStore } from '@/store/health-store';
@@ -17,13 +19,12 @@ import { LogCard } from '@/components/LogCard';
 import { 
   Plus, 
   Settings,
-  Droplet,
   Moon,
-  Utensils,
   Smile,
   ChevronRight
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -33,7 +34,6 @@ export default function DashboardScreen() {
     moodData, 
     activityData,
     userProfile,
-    addWaterData,
     journalEntries
   } = useHealthStore();
   
@@ -42,25 +42,6 @@ export default function DashboardScreen() {
   const latestWater = waterData[0];
   const latestMood = moodData[0];
   const latestActivity = activityData[0];
-  
-  // Handle quick water add
-  const handleAddWater = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const existingWaterToday = waterData.find(w => w.date === today);
-    
-    if (existingWaterToday) {
-      addWaterData({
-        ...existingWaterToday,
-        glasses: existingWaterToday.glasses + 1
-      });
-    } else {
-      addWaterData({
-        date: today,
-        glasses: 1,
-        target: 8
-      });
-    }
-  };
   
   // Get mood emoji
   const getMoodEmoji = (mood: string): string => {
@@ -75,7 +56,7 @@ export default function DashboardScreen() {
   };
   
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Image 
@@ -98,17 +79,13 @@ export default function DashboardScreen() {
           description="days with good health habits"
         />
         
-        <View style={styles.quickActionsContainer}>
+        <View style={styles.logButtonContainer}>
           <ActionButton
-            title="Log Food"
-            icon={<Utensils size={18} color={colors.text} />}
+            title="Log Today's Health"
+            icon={<Plus size={18} color="#FFFFFF" />}
             onPress={() => router.push('/logs/add')}
-          />
-          <ActionButton
-            title="Add Water"
-            icon={<Droplet size={18} color="#FFFFFF" />}
-            onPress={handleAddWater}
             primary
+            fullWidth
           />
         </View>
         
@@ -158,36 +135,13 @@ export default function DashboardScreen() {
             </View>
             <ChevronRight size={16} color={colors.textSecondary} />
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.recommendationItem}>
-            <View style={styles.recommendationContent}>
-              <Droplet size={20} color={colors.water} style={styles.recommendationIcon} />
-              <View>
-                <Text style={styles.recommendationText}>Drink 2 more glasses of water</Text>
-                <Text style={styles.recommendationSubtext}>You're below your daily target</Text>
-              </View>
-            </View>
-            <ChevronRight size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
         </View>
-        
-        <ActionButton
-          title="Add Health Log"
-          icon={<Plus size={18} color="#FFFFFF" />}
-          onPress={() => router.push('/logs/add')}
-          primary
-          fullWidth
-        />
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -216,11 +170,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  quickActionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-    gap: 12,
+  logButtonContainer: {
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,

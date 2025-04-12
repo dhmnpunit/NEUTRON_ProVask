@@ -13,6 +13,7 @@ import { useHealthStore } from '@/store/health-store';
 import { Dice5, ThumbsUp, ThumbsDown } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
 
 export default function DiceScreen() {
   const { 
@@ -66,78 +67,80 @@ export default function DiceScreen() {
   };
   
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>health dice</Text>
-        <View style={styles.streakContainer}>
-          <Text style={styles.streakText}>{userProfile.streak} day streak 🔥</Text>
+    <ScreenWrapper>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>health dice</Text>
+          <View style={styles.streakContainer}>
+            <Text style={styles.streakText}>{userProfile.streak} day streak 🔥</Text>
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.content}>
-        {currentChallenge ? (
-          <View style={styles.challengeCard}>
-            <Text style={styles.challengeTitle}>{currentChallenge.title}</Text>
-            <Text style={styles.challengeDescription}>{currentChallenge.description}</Text>
-            
-            <View style={styles.difficultyBadge}>
-              <Text style={styles.difficultyText}>
-                {currentChallenge.difficulty} challenge
+        
+        <View style={styles.content}>
+          {currentChallenge ? (
+            <View style={styles.challengeCard}>
+              <Text style={styles.challengeTitle}>{currentChallenge.title}</Text>
+              <Text style={styles.challengeDescription}>{currentChallenge.description}</Text>
+              
+              <View style={styles.difficultyBadge}>
+                <Text style={styles.difficultyText}>
+                  {currentChallenge.difficulty} challenge
+                </Text>
+              </View>
+              
+              <View style={styles.challengeActions}>
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={handleSkipChallenge}
+                >
+                  <ThumbsDown size={20} color={colors.textSecondary} />
+                  <Text style={styles.actionButtonText}>Skip</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.actionButton, styles.completeButton]}
+                  onPress={handleCompleteChallenge}
+                >
+                  <ThumbsUp size={20} color="#FFFFFF" />
+                  <Text style={styles.completeButtonText}>Complete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>Roll the dice</Text>
+              <Text style={styles.emptyText}>
+                Get a random health challenge to improve your wellbeing
               </Text>
             </View>
-            
-            <View style={styles.challengeActions}>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={handleSkipChallenge}
-              >
-                <ThumbsDown size={20} color={colors.textSecondary} />
-                <Text style={styles.actionButtonText}>Skip</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.completeButton]}
-                onPress={handleCompleteChallenge}
-              >
-                <ThumbsUp size={20} color="#FFFFFF" />
-                <Text style={styles.completeButtonText}>Complete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>Roll the dice</Text>
-            <Text style={styles.emptyText}>
-              Get a random health challenge to improve your wellbeing
+          )}
+          
+          <TouchableOpacity
+            style={styles.diceButton}
+            onPress={startRollAnimation}
+            disabled={isRolling}
+          >
+            <Animated.View
+              style={[
+                styles.diceIconContainer,
+                { transform: [{ rotate: spin }] }
+              ]}
+            >
+              <Dice5 size={32} color="#FFFFFF" />
+            </Animated.View>
+            <Text style={styles.diceButtonText}>
+              {isRolling ? 'Rolling...' : 'Roll for Challenge'}
+            </Text>
+          </TouchableOpacity>
+          
+          <View style={styles.coinsContainer}>
+            <Text style={styles.coinsText}>
+              You have {userProfile.healthCoins} health coins 💰
             </Text>
           </View>
-        )}
-        
-        <TouchableOpacity
-          style={styles.diceButton}
-          onPress={startRollAnimation}
-          disabled={isRolling}
-        >
-          <Animated.View
-            style={[
-              styles.diceIconContainer,
-              { transform: [{ rotate: spin }] }
-            ]}
-          >
-            <Dice5 size={32} color="#FFFFFF" />
-          </Animated.View>
-          <Text style={styles.diceButtonText}>
-            {isRolling ? 'Rolling...' : 'Roll for Challenge'}
-          </Text>
-        </TouchableOpacity>
-        
-        <View style={styles.coinsContainer}>
-          <Text style={styles.coinsText}>
-            You have {userProfile.healthCoins} health coins 💰
-          </Text>
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

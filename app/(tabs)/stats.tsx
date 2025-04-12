@@ -5,11 +5,11 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  SafeAreaView
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useHealthStore } from '@/store/health-store';
 import { ProgressChart } from '@/components/ProgressChart';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { 
   Moon, 
   Droplet, 
@@ -109,7 +109,7 @@ export default function StatsScreen() {
   const stepsTrend = calculateTrend(filteredActivityData.map(d => d.steps));
   
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       <View style={styles.timeRangeSelector}>
         <TouchableOpacity
           style={[
@@ -318,17 +318,14 @@ export default function StatsScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   timeRangeSelector: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
