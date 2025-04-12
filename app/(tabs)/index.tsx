@@ -20,9 +20,11 @@ import {
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { useAuth } from '@/context/AuthContext';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { 
     sleepData, 
     waterData, 
@@ -41,13 +43,15 @@ export default function DashboardScreen() {
     <ScreenWrapper>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80' }}
-            style={styles.avatar}
-          />
-          <Text style={styles.headerTitle}>your health</Text>
+          <TouchableOpacity onPress={() => router.push('/profile')}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80' }}
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{user?.user_metadata?.name || 'your health'}</Text>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/profile')}>
           <Settings size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
