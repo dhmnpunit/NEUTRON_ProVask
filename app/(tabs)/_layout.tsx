@@ -1,8 +1,9 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { HomeIcon, BookOpenIcon, ChartBarIcon, TrophyIcon, CubeIcon } from 'react-native-heroicons/outline';
+import { HomeIcon, BookOpenIcon } from 'react-native-heroicons/outline';
 import { View, Platform, StatusBar } from 'react-native';
+import { BarChart3, Dices } from 'lucide-react-native';
 
 const TabBarBackground = () => {
   const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
@@ -74,31 +75,15 @@ export default function TabLayout() {
         <Tabs.Screen
           name="stats"
           options={{
-            title: 'Statistics',
-            tabBarLabel: 'Stats',
-            tabBarIcon: ({ color, size }) => (
-              <ChartBarIcon size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="leaderboard"
-          options={{
-            title: 'Leaderboard',
-            tabBarLabel: 'Compete',
-            tabBarIcon: ({ color, size }) => (
-              <TrophyIcon size={size} color={color} />
-            ),
+            title: 'Stats',
+            tabBarIcon: ({ color }) => <BarChart3 size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="dice"
           options={{
-            title: 'Health Dice',
-            tabBarLabel: 'Dice',
-            tabBarIcon: ({ color, size }) => (
-              <CubeIcon size={size} color={color} />
-            ),
+            title: 'Dice',
+            tabBarIcon: ({ color }) => <Dices size={24} color={color} />,
           }}
         />
       </Tabs>

@@ -84,7 +84,7 @@ export interface Achievement {
 
 export interface HealthChallenge {
   id: string;
-  category: 'fitness' | 'mental' | 'nutrition' | 'sleep';
+  category: 'sleep' | 'water' | 'activity' | 'nutrition' | 'mood';
   title: string;
   description: string;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -99,14 +99,4 @@ export interface UserProfile {
   experience: number;
   healthCoins: number;
   joinedAt: string;
-}
-
-export interface LeaderboardEntry {
-  userId: string;
-  name: string;
-  avatar?: string;
-  score: number;
-  rank: number;
-  streak: number;
-  level: number;
 }

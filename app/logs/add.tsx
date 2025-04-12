@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { ChevronLeftIcon, CheckIcon, XMarkIcon, PlusIcon, TagIcon } from 'react-native-heroicons/outline';
 import { addJournalEntry } from '@/services/journalService';
 import { MoodType, HealthMetrics } from '@/types/health';
 import Slider from '@react-native-community/slider';
+import { ActionButton } from '@/components/ActionButton';
 
 export default function AddJournalEntryScreen() {
   const router = useRouter();
@@ -107,27 +108,24 @@ export default function AddJournalEntryScreen() {
 
   return (
     <ScreenWrapper>
+      <Stack.Screen 
+        options={{
+          title: "new journal entry",
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '700',
+            color: colors.text,
+          },
+          headerShadowVisible: false,
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+        }} 
+      />
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <ChevronLeftIcon size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>new journal entry</Text>
-          <TouchableOpacity 
-            style={styles.saveButton}
-            onPress={handleSaveEntry}
-            disabled={loading}
-          >
-            <CheckIcon size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView style={styles.scrollView}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>How are you feeling today?</Text>
@@ -293,37 +291,22 @@ export default function AddJournalEntryScreen() {
             </View>
           </View>
         </ScrollView>
+
+        <View style={styles.footer}>
+          <ActionButton
+            title="Save Entry"
+            onPress={handleSaveEntry}
+            primary
+            fullWidth
+            disabled={loading}
+          />
+        </View>
       </KeyboardAvoidingView>
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  saveButton: {
-    backgroundColor: colors.success,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   scrollView: {
     flex: 1,
     padding: 16,
@@ -424,5 +407,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     marginRight: 4,
+  },
+  footer: {
+    padding: 16,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
 });
