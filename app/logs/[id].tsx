@@ -15,6 +15,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { PencilIcon, ClockIcon, TagIcon, TrashIcon } from 'react-native-heroicons/outline';
 import { getJournalEntryById, deleteJournalEntry } from '@/services/journalService';
 import { JournalEntry, MoodType } from '@/types/health';
+import { typography, spacing, radius, shadows, iconSizes } from '@/constants/design';
 
 export default function JournalEntryScreen() {
   const router = useRouter();
@@ -93,13 +94,13 @@ export default function JournalEntryScreen() {
         style={styles.headerButton}
         onPress={() => router.push(`/logs/edit/${id}`)}
       >
-        <PencilIcon size={20} color={colors.text} />
+        <PencilIcon size={iconSizes.medium} color={colors.text} />
       </TouchableOpacity>
       <TouchableOpacity 
         style={styles.headerButton}
         onPress={handleDelete}
       >
-        <TrashIcon size={20} color={colors.danger} />
+        <TrashIcon size={iconSizes.medium} color={colors.danger} />
       </TouchableOpacity>
     </View>
   );
@@ -121,7 +122,7 @@ export default function JournalEntryScreen() {
       ) : entry ? (
         <ScrollView style={styles.container}>
           <View style={styles.dateContainer}>
-            <ClockIcon size={16} color={colors.textSecondary} style={styles.dateIcon} />
+            <ClockIcon size={iconSizes.small} color={colors.textSecondary} style={styles.dateIcon} />
             <Text style={styles.date}>{formatDate(entry.created_at)}</Text>
           </View>
 
@@ -142,7 +143,7 @@ export default function JournalEntryScreen() {
               <View style={styles.tagsContainer}>
                 {entry.tags.map((tag, index) => (
                   <View key={index} style={styles.tag}>
-                    <TagIcon size={14} color={colors.primary} style={styles.tagIcon} />
+                    <TagIcon size={iconSizes.small} color={colors.primary} style={styles.tagIcon} />
                     <Text style={styles.tagText}>{tag}</Text>
                   </View>
                 ))}
@@ -200,16 +201,16 @@ export default function JournalEntryScreen() {
 
 const styles = StyleSheet.create({
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: typography.h2.fontSize,
+    fontWeight: typography.h2.fontWeight,
+    color: typography.h2.color,
   },
   headerActions: {
     flexDirection: 'row',
   },
   headerButton: {
-    padding: 8,
-    marginLeft: 8,
+    padding: spacing.sm,
+    marginLeft: spacing.sm,
   },
   loadingContainer: {
     flex: 1,
@@ -218,52 +219,53 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
+    padding: spacing.md,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   dateIcon: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   date: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: typography.caption.fontSize,
+    color: typography.caption.color,
   },
   moodContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   moodEmoji: {
-    fontSize: 32,
-    marginRight: 8,
+    fontSize: 28,
+    marginRight: spacing.sm,
   },
   moodText: {
-    fontSize: 16,
-    color: colors.text,
+    fontSize: typography.body.fontSize,
+    color: typography.body.color,
   },
   contentContainer: {
     backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    padding: spacing.md,
+    borderRadius: radius.medium,
+    marginBottom: spacing.md,
+    ...shadows.small,
   },
   content: {
-    fontSize: 16,
-    color: colors.text,
-    lineHeight: 24,
+    fontSize: typography.body.fontSize,
+    lineHeight: typography.body.lineHeight,
+    color: typography.body.color,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
+    fontSize: typography.h3.fontSize,
+    fontWeight: typography.h3.fontWeight,
+    color: typography.h3.color,
+    marginBottom: spacing.sm,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -272,38 +274,39 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary + '20',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 4,
-    marginRight: 8,
-    marginBottom: 8,
+    backgroundColor: `${colors.primaryLight}99`,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.small,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
   },
   tagIcon: {
-    marginRight: 4,
+    marginRight: spacing.xs,
   },
   tagText: {
-    fontSize: 14,
+    fontSize: typography.caption.fontSize,
     color: colors.primary,
   },
   metricsContainer: {
     backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
+    padding: spacing.md,
+    borderRadius: radius.medium,
+    ...shadows.small,
   },
   metric: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.divider,
   },
   metricLabel: {
-    fontSize: 16,
-    color: colors.text,
+    fontSize: typography.body.fontSize,
+    color: typography.body.color,
   },
   metricValue: {
-    fontSize: 16,
+    fontSize: typography.body.fontSize,
     fontWeight: '600',
     color: colors.primary,
   },
@@ -311,9 +314,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: spacing.md,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: typography.body.fontSize,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
