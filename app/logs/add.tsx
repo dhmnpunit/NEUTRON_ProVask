@@ -4,204 +4,296 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity,
-  TextInput,
-  Switch,
+  TextInput, 
+  TouchableOpacity, 
+  Alert,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { colors } from '@/constants/colors';
-import { useHealthStore } from '@/store/health-store';
-import { Stack, useRouter } from 'expo-router';
-import { MoodType } from '@/types/health';
-import { MoodSelector } from '@/components/MoodSelector';
-import { RatingSelector } from '@/components/RatingSelector';
-import { ActionButton } from '@/components/ActionButton';
-import { ChevronLeft } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { ChevronLeft, Check, X, Plus, Tag } from 'lucide-react-native';
+import { addJournalEntry } from '@/services/journalService';
+import { MoodType, HealthMetrics } from '@/types/health';
+import Slider from '@react-native-community/slider';
 
 export default function AddJournalEntryScreen() {
   const router = useRouter();
-  const { addJournalEntry } = useHealthStore();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   
+  // Journal entry state
   const [content, setContent] = useState('');
-  const [mood, setMood] = useState<MoodType>('neutral');
-  const [sleepQuality, setSleepQuality] = useState(4);
-  const [mentalClarity, setMentalClarity] = useState(4);
-  const [energyLevel, setEnergyLevel] = useState(4);
-  
-  const [symptoms, setSymptoms] = useState('');
-  const [exerciseMinutes, setExerciseMinutes] = useState('');
-  const [waterGlasses, setWaterGlasses] = useState('');
-  const [hasHeadache, setHasHeadache] = useState(false);
-  const [hasBodyPain, setHasBodyPain] = useState(false);
-  const [hasFever, setHasFever] = useState(false);
-  
-  const handleSave = () => {
-    if (!content.trim()) {
-      return; // Don't save empty entries
+  const [mood, setMood] = useState<MoodType | undefined>(undefined);
+  const [healthMetrics, setHealthMetrics] = useState<HealthMetrics>({
+    sleep_quality: 5,
+    mental_clarity: 5,
+    energy_level: 5,
+    exercise_minutes: 0,
+    water_glasses: 0
+  });
+  const [tags, setTags] = useState<string[]>([]);
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
+  const [newSymptom, setNewSymptom] = useState('');
+
+  const handleSaveEntry = async () => {
+    if (!content) {
+      Alert.alert('Error', 'Please enter some content for your journal entry');
+      return;
     }
-    
-    const activeSymptoms = [];
-    if (hasHeadache) activeSymptoms.push('headache');
-    if (hasBodyPain) activeSymptoms.push('body pain');
-    if (hasFever) activeSymptoms.push('fever');
-    if (symptoms.trim()) activeSymptoms.push(...symptoms.split(',').map(s => s.trim()));
-    
-    addJournalEntry({
-      date: new Date().toISOString().split('T')[0],
-      content: content.trim(),
-      tags: ['mood', 'sleep', 'energy'].filter(tag => 
-        (tag === 'mood' && mood !== 'neutral') ||
-        (tag === 'sleep' && sleepQuality !== 4) ||
-        (tag === 'energy' && energyLevel !== 4)
-      ),
-      mood,
-      healthMetrics: {
-        sleepQuality,
-        mentalClarity,
-        energyLevel,
-        exerciseMinutes: parseInt(exerciseMinutes) || 0,
-        waterGlasses: parseInt(waterGlasses) || 0,
-      },
-      symptoms: activeSymptoms,
-    });
-    
-    router.back();
+
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to save an entry');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await addJournalEntry({
+        user_id: user.id,
+        content,
+        mood,
+        health_metrics: healthMetrics,
+        tags,
+        symptoms
+      });
+      
+      router.replace('/logs');
+    } catch (error) {
+      console.error('Error saving journal entry:', error);
+      Alert.alert('Error', 'Failed to save journal entry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
-  
+
+  const addTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const addSymptom = () => {
+    if (newSymptom.trim() && !symptoms.includes(newSymptom.trim())) {
+      setSymptoms([...symptoms, newSymptom.trim()]);
+      setNewSymptom('');
+    }
+  };
+
+  const removeSymptom = (symptomToRemove: string) => {
+    setSymptoms(symptoms.filter(symptom => symptom !== symptomToRemove));
+  };
+
+  const renderMoodOption = (moodType: MoodType, emoji: string, label: string) => (
+    <TouchableOpacity 
+      style={[
+        styles.moodOption, 
+        mood === moodType && styles.moodOptionSelected
+      ]}
+      onPress={() => setMood(moodType)}
+    >
+      <Text style={styles.moodEmoji}>{emoji}</Text>
+      <Text style={styles.moodLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <ScreenWrapper>
-      <Stack.Screen options={{ headerShown: false }} />
-      
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ChevronLeft size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>log your health</Text>
-        <View style={styles.placeholder} />
-      </View>
-      
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        <MoodSelector value={mood} onChange={setMood} />
-        
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>notes</Text>
-          <TextInput
-            style={styles.textInput}
-            value={content}
-            onChangeText={setContent}
-            multiline
-            placeholder="How are you feeling today? What affected your health?"
-            placeholderTextColor={colors.textTertiary}
-          />
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ChevronLeft size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>new journal entry</Text>
+          <TouchableOpacity 
+            style={styles.saveButton}
+            onPress={handleSaveEntry}
+            disabled={loading}
+          >
+            <Check size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Activities</Text>
-          
-          <View style={styles.metricInput}>
-            <Text style={styles.metricLabel}>Exercise (minutes)</Text>
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>How are you feeling today?</Text>
+            <View style={styles.moodContainer}>
+              {renderMoodOption('terrible', '😫', 'Terrible')}
+              {renderMoodOption('bad', '🙁', 'Bad')}
+              {renderMoodOption('neutral', '😐', 'Neutral')}
+              {renderMoodOption('good', '🙂', 'Good')}
+              {renderMoodOption('great', '😄', 'Great')}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Journal Entry</Text>
             <TextInput
-              style={styles.numberInput}
-              value={exerciseMinutes}
-              onChangeText={setExerciseMinutes}
-              keyboardType="number-pad"
-              placeholder="0"
+              style={styles.contentInput}
+              placeholder="Write about your day, health, thoughts..."
               placeholderTextColor={colors.textTertiary}
-            />
-          </View>
-
-          <View style={styles.metricInput}>
-            <Text style={styles.metricLabel}>Water (glasses)</Text>
-            <TextInput
-              style={styles.numberInput}
-              value={waterGlasses}
-              onChangeText={setWaterGlasses}
-              keyboardType="number-pad"
-              placeholder="0"
-              placeholderTextColor={colors.textTertiary}
-            />
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Common Symptoms</Text>
-          
-          <View style={styles.symptomToggle}>
-            <Text style={styles.symptomLabel}>Headache</Text>
-            <Switch
-              value={hasHeadache}
-              onValueChange={setHasHeadache}
-              trackColor={{ false: colors.border, true: colors.primary }}
-            />
-          </View>
-
-          <View style={styles.symptomToggle}>
-            <Text style={styles.symptomLabel}>Body Pain</Text>
-            <Switch
-              value={hasBodyPain}
-              onValueChange={setHasBodyPain}
-              trackColor={{ false: colors.border, true: colors.primary }}
-            />
-          </View>
-
-          <View style={styles.symptomToggle}>
-            <Text style={styles.symptomLabel}>Fever</Text>
-            <Switch
-              value={hasFever}
-              onValueChange={setHasFever}
-              trackColor={{ false: colors.border, true: colors.primary }}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Other Symptoms</Text>
-            <TextInput
-              style={[styles.textInput, { minHeight: 60 }]}
-              value={symptoms}
-              onChangeText={setSymptoms}
               multiline
-              placeholder="Enter any other symptoms, separated by commas"
-              placeholderTextColor={colors.textTertiary}
+              value={content}
+              onChangeText={setContent}
             />
           </View>
-        </View>
-        
-        <RatingSelector
-          title="sleep quality"
-          description="1 = terrible sleep, 7 = best sleep ever"
-          value={sleepQuality}
-          onChange={setSleepQuality}
-        />
-        
-        <RatingSelector
-          title="mental clarity"
-          description="1 = brain fog, 7 = laser focused"
-          value={mentalClarity}
-          onChange={setMentalClarity}
-        />
-        
-        <RatingSelector
-          title="energy level"
-          description="1 = exhausted, 7 = energized"
-          value={energyLevel}
-          onChange={setEnergyLevel}
-        />
-        
-        <View style={styles.saveButtonContainer}>
-          <ActionButton
-            title="Save Health Log"
-            onPress={handleSave}
-            primary
-            fullWidth
-          />
-        </View>
-      </ScrollView>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Health Metrics</Text>
+            
+            <Text style={styles.metricLabel}>
+              Sleep Quality: {healthMetrics.sleep_quality}/10
+            </Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={1}
+              maximumValue={10}
+              step={1}
+              value={healthMetrics.sleep_quality}
+              onValueChange={(value: number) => 
+                setHealthMetrics({...healthMetrics, sleep_quality: value})
+              }
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.border}
+            />
+
+            <Text style={styles.metricLabel}>
+              Mental Clarity: {healthMetrics.mental_clarity}/10
+            </Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={1}
+              maximumValue={10}
+              step={1}
+              value={healthMetrics.mental_clarity}
+              onValueChange={(value: number) => 
+                setHealthMetrics({...healthMetrics, mental_clarity: value})
+              }
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.border}
+            />
+
+            <Text style={styles.metricLabel}>
+              Energy Level: {healthMetrics.energy_level}/10
+            </Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={1}
+              maximumValue={10}
+              step={1}
+              value={healthMetrics.energy_level}
+              onValueChange={(value: number) => 
+                setHealthMetrics({...healthMetrics, energy_level: value})
+              }
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.border}
+            />
+
+            <Text style={styles.metricLabel}>
+              Exercise (minutes): {healthMetrics.exercise_minutes}
+            </Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={120}
+              step={5}
+              value={healthMetrics.exercise_minutes}
+              onValueChange={(value: number) => 
+                setHealthMetrics({...healthMetrics, exercise_minutes: value})
+              }
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.border}
+            />
+
+            <Text style={styles.metricLabel}>
+              Water (glasses): {healthMetrics.water_glasses}
+            </Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={12}
+              step={1}
+              value={healthMetrics.water_glasses}
+              onValueChange={(value: number) => 
+                setHealthMetrics({...healthMetrics, water_glasses: value})
+              }
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.border}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tags</Text>
+            <View style={styles.tagsInputContainer}>
+              <TextInput
+                style={styles.tagInput}
+                placeholder="Add a tag (e.g., exercise, nutrition)"
+                placeholderTextColor={colors.textTertiary}
+                value={newTag}
+                onChangeText={setNewTag}
+                onSubmitEditing={addTag}
+              />
+              <TouchableOpacity style={styles.addTagButton} onPress={addTag}>
+                <Plus size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.tagsContainer}>
+              {tags.map((tag, index) => (
+                <View key={index} style={styles.tag}>
+                  <Tag size={14} color={colors.primary} style={styles.tagIcon} />
+                  <Text style={styles.tagText}>{tag}</Text>
+                  <TouchableOpacity onPress={() => removeTag(tag)}>
+                    <X size={14} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Symptoms (if any)</Text>
+            <View style={styles.tagsInputContainer}>
+              <TextInput
+                style={styles.tagInput}
+                placeholder="Add a symptom (e.g., headache, fatigue)"
+                placeholderTextColor={colors.textTertiary}
+                value={newSymptom}
+                onChangeText={setNewSymptom}
+                onSubmitEditing={addSymptom}
+              />
+              <TouchableOpacity style={styles.addTagButton} onPress={addSymptom}>
+                <Plus size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.tagsContainer}>
+              {symptoms.map((symptom, index) => (
+                <View key={index} style={styles.tag}>
+                  <Text style={styles.tagText}>{symptom}</Text>
+                  <TouchableOpacity onPress={() => removeSymptom(symptom)}>
+                    <X size={14} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenWrapper>
   );
 }
@@ -224,8 +316,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  placeholder: {
-    width: 32,
+  saveButton: {
+    backgroundColor: colors.success,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,
@@ -235,59 +332,97 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
-    marginBottom: 16,
+    color: colors.textSecondary,
+    marginBottom: 12,
   },
-  inputContainer: {
-    marginBottom: 24,
+  moodContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 8,
+  moodOption: {
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    width: '18%',
   },
-  textInput: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
+  moodOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
+  },
+  moodEmoji: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  moodLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  contentInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
     minHeight: 120,
-    fontSize: 16,
     color: colors.text,
+    fontSize: 16,
     textAlignVertical: 'top',
   },
-  metricInput: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   metricLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text,
+    marginBottom: 8,
+    marginTop: 12,
   },
-  numberInput: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    padding: 8,
-    width: 80,
-    textAlign: 'center',
-    fontSize: 16,
-    color: colors.text,
+  slider: {
+    width: '100%',
+    height: 40,
   },
-  symptomToggle: {
+  tagsInputContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  symptomLabel: {
-    fontSize: 16,
+  tagInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
     color: colors.text,
+    marginRight: 8,
   },
-  saveButtonContainer: {
-    marginBottom: 32,
+  addTagButton: {
+    backgroundColor: colors.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 4,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagIcon: {
+    marginRight: 4,
+  },
+  tagText: {
+    fontSize: 14,
+    color: colors.primary,
+    marginRight: 4,
   },
 });

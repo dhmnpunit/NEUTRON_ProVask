@@ -44,7 +44,10 @@ export default function ProfileScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.profileSection}>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80' }}
+            source={{ 
+              uri: user?.user_metadata?.avatar_url || 
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'User')}&background=random`
+            }}
             style={styles.profileImage}
           />
           <Text style={styles.name}>{user?.user_metadata?.name || 'User'}</Text>

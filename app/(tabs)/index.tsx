@@ -45,7 +45,10 @@ export default function DashboardScreen() {
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.push('/profile')}>
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80' }}
+              source={{ 
+                uri: user?.user_metadata?.avatar_url || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.user_metadata?.name || 'User')}&background=random`
+              }}
               style={styles.avatar}
             />
           </TouchableOpacity>
