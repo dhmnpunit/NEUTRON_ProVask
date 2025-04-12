@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { ChevronLeftIcon, TrashIcon, PencilIcon, ClockIcon, TagIcon } from 'react-native-heroicons/outline';
+import { PencilIcon, ClockIcon, TagIcon, TrashIcon } from 'react-native-heroicons/outline';
 import { getJournalEntryById, deleteJournalEntry } from '@/services/journalService';
 import { JournalEntry, MoodType } from '@/types/health';
 
@@ -86,32 +86,33 @@ export default function JournalEntryScreen() {
       minute: '2-digit'
     });
   };
+  
+  const HeaderRight = () => (
+    <View style={styles.headerActions}>
+      <TouchableOpacity 
+        style={styles.headerButton}
+        onPress={() => router.push(`/logs/edit/${id}`)}
+      >
+        <PencilIcon size={20} color={colors.text} />
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.headerButton}
+        onPress={handleDelete}
+      >
+        <TrashIcon size={20} color={colors.danger} />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <ScreenWrapper>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ChevronLeftIcon size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>journal entry</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={() => router.push(`/logs/edit/${id}`)}
-          >
-            <PencilIcon size={20} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={handleDelete}
-          >
-            <TrashIcon size={20} color={colors.danger} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Stack.Screen
+        options={{
+          title: "journal entry",
+          headerRight: () => <HeaderRight />,
+          headerTitleStyle: styles.headerTitle,
+        }}
+      />
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -198,22 +199,10 @@ export default function JournalEntryScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
-  },
-  backButton: {
-    padding: 4,
   },
   headerActions: {
     flexDirection: 'row',

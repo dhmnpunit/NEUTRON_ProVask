@@ -14,6 +14,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { PlusIcon, MagnifyingGlassIcon, FunnelIcon, BeakerIcon, CloudIcon, MoonIcon } from 'react-native-heroicons/outline';
 import { JournalEntry } from '@/types/health';
 import { getJournalEntries } from '@/services/journalService';
+import { LogCard } from '@/components/LogCard';
 
 export default function LogsScreen() {
   const router = useRouter();
@@ -98,25 +99,15 @@ export default function LogsScreen() {
           </Text>
         ) : (
           filteredEntries.map(entry => (
-            <TouchableOpacity 
-              key={entry.id} 
-              style={styles.entryCard}
+            <LogCard
+              key={entry.id}
+              title={`Health Log - ${new Date(entry.created_at).toLocaleDateString()}`}
+              subtitle={entry.content.substring(0, 60) + (entry.content.length > 60 ? '...' : '')}
+              notes={entry.content}
+              date={entry.created_at}
+              tags={entry.tags}
               onPress={() => router.push(`/logs/${entry.id}`)}
-            >
-              <Text style={styles.entryDate}>
-                {new Date(entry.created_at).toLocaleDateString()}
-              </Text>
-              <Text style={styles.entryContent} numberOfLines={2}>
-                {entry.content}
-              </Text>
-              <View style={styles.entryTags}>
-                {entry.tags.map((tag, index) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-            </TouchableOpacity>
+            />
           ))
         )}
       </ScrollView>
@@ -196,38 +187,6 @@ const styles = StyleSheet.create({
   entriesContainer: {
     flex: 1,
     padding: 16,
-  },
-  entryCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  entryDate: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  entryContent: {
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 8,
-  },
-  entryTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  tag: {
-    backgroundColor: colors.primary + '20',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  tagText: {
-    fontSize: 12,
-    color: colors.primary,
   },
   loadingText: {
     textAlign: 'center',
