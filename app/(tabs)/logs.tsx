@@ -11,7 +11,7 @@ import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Plus, Search, Filter, Utensils, Droplet, Moon } from 'lucide-react-native';
+import { PlusIcon, MagnifyingGlassIcon, FunnelIcon, BeakerIcon, CloudIcon, MoonIcon } from 'react-native-heroicons/outline';
 import { JournalEntry } from '@/types/health';
 import { getJournalEntries } from '@/services/journalService';
 
@@ -53,12 +53,12 @@ export default function LogsScreen() {
           style={styles.addButton}
           onPress={() => router.push('/logs/add')}
         >
-          <Plus size={20} color="#FFFFFF" />
+          <PlusIcon size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       
       <View style={styles.searchContainer}>
-        <Search size={20} color={colors.textTertiary} style={styles.searchIcon} />
+        <MagnifyingGlassIcon size={20} color={colors.textTertiary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="search your logs..."
@@ -67,7 +67,7 @@ export default function LogsScreen() {
           onChangeText={setSearchQuery}
         />
         <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color={colors.textSecondary} />
+          <FunnelIcon size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
       
@@ -76,15 +76,15 @@ export default function LogsScreen() {
           <Text style={[styles.categoryText, styles.categoryTextActive]}>All</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.categoryButton}>
-          <Utensils size={16} color={colors.textSecondary} style={styles.categoryIcon} />
+          <BeakerIcon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
           <Text style={styles.categoryText}>Food</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.categoryButton}>
-          <Droplet size={16} color={colors.textSecondary} style={styles.categoryIcon} />
+          <CloudIcon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
           <Text style={styles.categoryText}>Water</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.categoryButton}>
-          <Moon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
+          <MoonIcon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
           <Text style={styles.categoryText}>Sleep</Text>
         </TouchableOpacity>
       </View>

@@ -13,7 +13,7 @@ import { leaderboardData } from '@/mocks/health-data';
 import { useHealthStore } from '@/store/health-store';
 import { LeaderboardItem } from '@/components/LeaderboardItem';
 import { AchievementCard } from '@/components/AchievementCard';
-import { Trophy, Users, Award, ChevronRight } from 'lucide-react-native';
+import { TrophyIcon, UserGroupIcon, AcademicCapIcon, ChevronRightIcon } from 'react-native-heroicons/outline';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 
 type LeaderboardTab = 'global' | 'friends' | 'achievements';
@@ -32,7 +32,7 @@ export default function LeaderboardScreen() {
           ]}
           onPress={() => setActiveTab('global')}
         >
-          <Trophy 
+          <TrophyIcon 
             size={16} 
             color={activeTab === 'global' ? colors.primary : colors.textSecondary} 
             style={styles.tabIcon}
@@ -54,7 +54,7 @@ export default function LeaderboardScreen() {
           ]}
           onPress={() => setActiveTab('friends')}
         >
-          <Users 
+          <UserGroupIcon 
             size={16} 
             color={activeTab === 'friends' ? colors.primary : colors.textSecondary} 
             style={styles.tabIcon}
@@ -76,7 +76,7 @@ export default function LeaderboardScreen() {
           ]}
           onPress={() => setActiveTab('achievements')}
         >
-          <Award 
+          <AcademicCapIcon 
             size={16} 
             color={activeTab === 'achievements' ? colors.primary : colors.textSecondary} 
             style={styles.tabIcon}
@@ -138,7 +138,7 @@ export default function LeaderboardScreen() {
             
             <TouchableOpacity style={styles.viewMoreButton}>
               <Text style={styles.viewMoreText}>View More</Text>
-              <ChevronRight size={16} color={colors.primary} />
+              <ChevronRightIcon size={16} color={colors.primary} />
             </TouchableOpacity>
           </>
         )}

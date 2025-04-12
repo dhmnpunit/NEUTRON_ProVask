@@ -12,7 +12,7 @@ import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { ChevronLeft, Trash, Edit, Clock, Tag } from 'lucide-react-native';
+import { ChevronLeftIcon, TrashIcon, PencilIcon, ClockIcon, TagIcon } from 'react-native-heroicons/outline';
 import { getJournalEntryById, deleteJournalEntry } from '@/services/journalService';
 import { JournalEntry, MoodType } from '@/types/health';
 
@@ -94,7 +94,7 @@ export default function JournalEntryScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} color={colors.text} />
+          <ChevronLeftIcon size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>journal entry</Text>
         <View style={styles.headerActions}>
@@ -102,13 +102,13 @@ export default function JournalEntryScreen() {
             style={styles.headerButton}
             onPress={() => router.push(`/logs/edit/${id}`)}
           >
-            <Edit size={20} color={colors.text} />
+            <PencilIcon size={20} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerButton}
             onPress={handleDelete}
           >
-            <Trash size={20} color={colors.danger} />
+            <TrashIcon size={20} color={colors.danger} />
           </TouchableOpacity>
         </View>
       </View>
@@ -120,7 +120,7 @@ export default function JournalEntryScreen() {
       ) : entry ? (
         <ScrollView style={styles.container}>
           <View style={styles.dateContainer}>
-            <Clock size={16} color={colors.textSecondary} style={styles.dateIcon} />
+            <ClockIcon size={16} color={colors.textSecondary} style={styles.dateIcon} />
             <Text style={styles.date}>{formatDate(entry.created_at)}</Text>
           </View>
 
@@ -141,7 +141,7 @@ export default function JournalEntryScreen() {
               <View style={styles.tagsContainer}>
                 {entry.tags.map((tag, index) => (
                   <View key={index} style={styles.tag}>
-                    <Tag size={14} color={colors.primary} style={styles.tagIcon} />
+                    <TagIcon size={14} color={colors.primary} style={styles.tagIcon} />
                     <Text style={styles.tagText}>{tag}</Text>
                   </View>
                 ))}

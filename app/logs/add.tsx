@@ -14,7 +14,7 @@ import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { ChevronLeft, Check, X, Plus, Tag } from 'lucide-react-native';
+import { ChevronLeftIcon, CheckIcon, XMarkIcon, PlusIcon, TagIcon } from 'react-native-heroicons/outline';
 import { addJournalEntry } from '@/services/journalService';
 import { MoodType, HealthMetrics } from '@/types/health';
 import Slider from '@react-native-community/slider';
@@ -116,7 +116,7 @@ export default function AddJournalEntryScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <ChevronLeft size={24} color={colors.text} />
+            <ChevronLeftIcon size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>new journal entry</Text>
           <TouchableOpacity 
@@ -124,7 +124,7 @@ export default function AddJournalEntryScreen() {
             onPress={handleSaveEntry}
             disabled={loading}
           >
-            <Check size={24} color="#FFFFFF" />
+            <CheckIcon size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -248,17 +248,17 @@ export default function AddJournalEntryScreen() {
                 onSubmitEditing={addTag}
               />
               <TouchableOpacity style={styles.addTagButton} onPress={addTag}>
-                <Plus size={20} color="#FFFFFF" />
+                <PlusIcon size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.tagsContainer}>
               {tags.map((tag, index) => (
                 <View key={index} style={styles.tag}>
-                  <Tag size={14} color={colors.primary} style={styles.tagIcon} />
+                  <TagIcon size={14} color={colors.primary} style={styles.tagIcon} />
                   <Text style={styles.tagText}>{tag}</Text>
                   <TouchableOpacity onPress={() => removeTag(tag)}>
-                    <X size={14} color={colors.textSecondary} />
+                    <XMarkIcon size={14} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -277,7 +277,7 @@ export default function AddJournalEntryScreen() {
                 onSubmitEditing={addSymptom}
               />
               <TouchableOpacity style={styles.addTagButton} onPress={addSymptom}>
-                <Plus size={20} color="#FFFFFF" />
+                <PlusIcon size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -286,7 +286,7 @@ export default function AddJournalEntryScreen() {
                 <View key={index} style={styles.tag}>
                   <Text style={styles.tagText}>{symptom}</Text>
                   <TouchableOpacity onPress={() => removeSymptom(symptom)}>
-                    <X size={14} color={colors.textSecondary} />
+                    <XMarkIcon size={14} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
               ))}

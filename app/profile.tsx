@@ -11,7 +11,7 @@ import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { LogOut, ChevronLeft, Settings, User } from 'lucide-react-native';
+import { ChevronLeftIcon, Cog6ToothIcon, UserIcon, ArrowRightOnRectangleIcon } from 'react-native-heroicons/outline';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -33,11 +33,11 @@ export default function ProfileScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} color={colors.text} />
+          <ChevronLeftIcon size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity>
-          <Settings size={24} color={colors.text} />
+          <Cog6ToothIcon size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Settings</Text>
           <TouchableOpacity style={styles.menuItem}>
-            <User size={20} color={colors.text} />
+            <UserIcon size={20} color={colors.text} />
             <Text style={styles.menuText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
@@ -66,7 +66,7 @@ export default function ProfileScreen() {
           style={styles.logoutButton}
           onPress={handleLogout}
         >
-          <LogOut size={20} color={colors.danger} />
+          <ArrowRightOnRectangleIcon size={20} color={colors.danger} />
           <Text style={[styles.menuText, { color: colors.danger }]}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>

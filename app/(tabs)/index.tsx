@@ -13,11 +13,11 @@ import { StreakCard } from '@/components/StreakCard';
 import { MoodChart } from '@/components/MoodChart';
 import { ActionButton } from '@/components/ActionButton';
 import { 
-  Plus, 
-  Settings,
-  Moon,
-  ChevronRight
-} from 'lucide-react-native';
+  PlusIcon, 
+  Cog6ToothIcon,
+  MoonIcon,
+  ChevronRightIcon
+} from 'react-native-heroicons/outline';
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useAuth } from '@/context/AuthContext';
@@ -55,7 +55,7 @@ export default function DashboardScreen() {
           <Text style={styles.headerTitle}>{user?.user_metadata?.name || 'your health'}</Text>
         </View>
         <TouchableOpacity onPress={() => router.push('/profile')}>
-          <Settings size={24} color={colors.text} />
+          <Cog6ToothIcon size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
       
@@ -71,7 +71,7 @@ export default function DashboardScreen() {
         <View style={styles.logButtonContainer}>
           <ActionButton
             title="Log Today's Health"
-            icon={<Plus size={18} color="#FFFFFF" />}
+            icon={<PlusIcon size={18} color="#FFFFFF" />}
             onPress={() => router.push('/logs/add')}
             primary
             fullWidth
@@ -91,13 +91,13 @@ export default function DashboardScreen() {
           
           <TouchableOpacity style={styles.recommendationItem}>
             <View style={styles.recommendationContent}>
-              <Moon size={20} color={colors.sleep} style={styles.recommendationIcon} />
+              <MoonIcon size={20} color={colors.sleep} style={styles.recommendationIcon} />
               <View>
                 <Text style={styles.recommendationText}>Go to bed 30 minutes earlier tonight</Text>
                 <Text style={styles.recommendationSubtext}>Improve your sleep quality</Text>
               </View>
             </View>
-            <ChevronRight size={16} color={colors.textSecondary} />
+            <ChevronRightIcon size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { Home, BookOpen, BarChart2, Trophy, Dice5 } from 'lucide-react-native';
+import { HomeIcon, BookOpenIcon, ChartBarIcon, TrophyIcon, CubeIcon } from 'react-native-heroicons/outline';
 import { View, Platform, StatusBar } from 'react-native';
 
 const TabBarBackground = () => {
@@ -57,7 +57,7 @@ export default function TabLayout() {
             title: 'Dashboard',
             tabBarLabel: 'Home',
             tabBarIcon: ({ color, size }) => (
-              <Home size={size} color={color} />
+              <HomeIcon size={size} color={color} />
             ),
           }}
         />
@@ -67,7 +67,7 @@ export default function TabLayout() {
             title: 'Journal',
             tabBarLabel: 'Journal',
             tabBarIcon: ({ color, size }) => (
-              <BookOpen size={size} color={color} />
+              <BookOpenIcon size={size} color={color} />
             ),
           }}
         />
@@ -77,7 +77,7 @@ export default function TabLayout() {
             title: 'Statistics',
             tabBarLabel: 'Stats',
             tabBarIcon: ({ color, size }) => (
-              <BarChart2 size={size} color={color} />
+              <ChartBarIcon size={size} color={color} />
             ),
           }}
         />
@@ -87,7 +87,7 @@ export default function TabLayout() {
             title: 'Leaderboard',
             tabBarLabel: 'Compete',
             tabBarIcon: ({ color, size }) => (
-              <Trophy size={size} color={color} />
+              <TrophyIcon size={size} color={color} />
             ),
           }}
         />
@@ -97,7 +97,7 @@ export default function TabLayout() {
             title: 'Health Dice',
             tabBarLabel: 'Dice',
             tabBarIcon: ({ color, size }) => (
-              <Dice5 size={size} color={color} />
+              <CubeIcon size={size} color={color} />
             ),
           }}
         />
