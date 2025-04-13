@@ -17,12 +17,25 @@ import {
   waterData as mockWaterData, 
   moodData as mockMoodData, 
   activityData as mockActivityData,
-  journalEntries as mockJournalEntries,
+  mockJournalEntries,
   healthGoals as mockHealthGoals,
   achievements as mockAchievements,
   userProfile as mockUserProfile,
   healthChallenges as mockHealthChallenges
 } from '@/mocks/health-data';
+import { differenceInDays, parseISO } from 'date-fns';
+
+// New Task interface for the flip dice challenges
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  coins: number;
+  completed: boolean;
+  createdAt: string;
+  completedAt?: string;
+}
 
 interface HealthState {
   // User data
@@ -45,6 +58,9 @@ interface HealthState {
   healthChallenges: HealthChallenge[];
   currentChallenge: HealthChallenge | null;
   
+  // Tasks from flip dice
+  tasks: Task[];
+  
   // Actions
   addSleepData: (data: SleepData) => void;
   addWaterData: (data: WaterData) => void;
@@ -57,11 +73,54 @@ interface HealthState {
   rollNewChallenge: (category?: string) => void;
   completeChallenge: () => void;
   updateUserProfile: (updates: Partial<UserProfile>) => void;
+  
+  // New task functions
+  addTask: (task: Omit<Task, 'completedAt'>) => void;
+  completeTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+  updateHealthCoins: (amount: number) => void;
+  
+  // New actions
+  checkStreak: () => void;
 }
+
+// Fix streak calculation logic
+const checkAndUpdateStreak = (state: HealthState) => {
+  if (!state.userProfile.lastActivityDate) return 0;
+  
+  const today = new Date();
+  const lastActivity = parseISO(state.userProfile.lastActivityDate);
+  const dayDiff = differenceInDays(today, lastActivity);
+  
+  // Reset streak if more than 1 day has passed
+  if (dayDiff > 1) {
+    return 0;
+  }
+  
+  // Keep existing streak if activity was today or yesterday
+  return state.userProfile.streak;
+};
+
+// Helper function to calculate new streak value
+const calculateNewStreak = (state: HealthState) => {
+  // First check if streak should be reset
+  const baseStreak = checkAndUpdateStreak(state);
+  
+  // Get today's date in ISO format (YYYY-MM-DD)
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Only increment if this is the first activity today
+  if (state.userProfile.lastActivityDate !== today) {
+    return baseStreak + 1;
+  }
+  
+  // Don't increment if already logged something today
+  return baseStreak;
+};
 
 export const useHealthStore = create<HealthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Initial state with mock data
       userProfile: mockUserProfile,
       sleepData: mockSleepData,
@@ -73,6 +132,7 @@ export const useHealthStore = create<HealthState>()(
       achievements: mockAchievements,
       healthChallenges: mockHealthChallenges,
       currentChallenge: null,
+      tasks: [],
       
       // Actions
       addSleepData: (data) => set((state) => ({
@@ -91,15 +151,28 @@ export const useHealthStore = create<HealthState>()(
         activityData: [data, ...state.activityData]
       })),
       
-      addJournalEntry: (entry) => set((state) => ({
-        journalEntries: [
-          {
-            id: Date.now().toString(),
-            ...entry
-          },
-          ...state.journalEntries
-        ]
-      })),
+      addJournalEntry: (entry) => set((state) => {
+        // Get today's date in ISO format (YYYY-MM-DD)
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Calculate new streak value
+        const newStreak = calculateNewStreak(state);
+        
+        return {
+          journalEntries: [
+            {
+              id: Date.now().toString(),
+              ...entry
+            },
+            ...state.journalEntries
+          ],
+          userProfile: {
+            ...state.userProfile,
+            streak: newStreak,
+            lastActivityDate: today
+          }
+        };
+      }),
       
       updateJournalEntry: (id, updates) => set((state) => ({
         journalEntries: state.journalEntries.map(entry => 
@@ -135,14 +208,21 @@ export const useHealthStore = create<HealthState>()(
         const coinsEarned = 
           state.currentChallenge.difficulty === 'easy' ? 10 :
           state.currentChallenge.difficulty === 'medium' ? 20 : 30;
+        
+        // Get today's date in ISO format (YYYY-MM-DD)
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Calculate new streak value
+        const newStreak = calculateNewStreak(state);
           
         return {
           currentChallenge: null,
           userProfile: {
             ...state.userProfile,
             healthCoins: state.userProfile.healthCoins + coinsEarned,
-            streak: state.userProfile.streak + 1,
-            experience: state.userProfile.experience + (coinsEarned * 5)
+            streak: newStreak,
+            experience: state.userProfile.experience + (coinsEarned * 5),
+            lastActivityDate: today
           }
         };
       }),
@@ -153,6 +233,83 @@ export const useHealthStore = create<HealthState>()(
           ...updates
         }
       })),
+      
+      // New task functions
+      addTask: (task) => set((state) => ({
+        tasks: [task, ...state.tasks]
+      })),
+      
+      completeTask: (id) => set((state) => {
+        const taskToComplete = state.tasks.find(task => task.id === id);
+        
+        if (!taskToComplete) return state;
+        
+        const updatedTasks = state.tasks.map(task => 
+          task.id === id ? { 
+            ...task, 
+            completed: true, 
+            completedAt: new Date().toISOString() 
+          } : task
+        );
+        
+        // Get today's date in ISO format (YYYY-MM-DD)
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Calculate new streak value
+        const newStreak = calculateNewStreak(state);
+        
+        return {
+          tasks: updatedTasks,
+          userProfile: {
+            ...state.userProfile,
+            healthCoins: state.userProfile.healthCoins + (taskToComplete.coins || 0),
+            streak: newStreak,
+            experience: state.userProfile.experience + ((taskToComplete.coins || 0) * 5),
+            lastActivityDate: today
+          }
+        };
+      }),
+      
+      deleteTask: (id) => set((state) => ({
+        tasks: state.tasks.filter(task => task.id !== id)
+      })),
+      
+      updateHealthCoins: (amount) => set((state) => ({
+        userProfile: {
+          ...state.userProfile,
+          healthCoins: state.userProfile.healthCoins + amount
+        }
+      })),
+      
+      // New actions
+      checkStreak: () => set((state) => {
+        if (!state.userProfile.lastActivityDate) {
+          // If there's no lastActivityDate, reset streak to 0
+          return {
+            userProfile: {
+              ...state.userProfile,
+              streak: 0
+            }
+          };
+        }
+        
+        const today = new Date();
+        const lastActivity = parseISO(state.userProfile.lastActivityDate);
+        const dayDiff = differenceInDays(today, lastActivity);
+        
+        if (dayDiff > 1) {
+          // If more than a day has passed, reset streak
+          return {
+            userProfile: {
+              ...state.userProfile,
+              streak: 0
+            }
+          };
+        }
+        
+        // Otherwise, keep current streak
+        return state;
+      }),
     }),
     {
       name: 'health-storage',

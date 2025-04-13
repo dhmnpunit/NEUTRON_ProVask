@@ -8,8 +8,7 @@ import {
     Achievement,
     HealthChallenge,
     UserProfile,
-    LeaderboardEntry
-  } from '@/types/health';
+} from '@/types/health';
   
   // Helper to generate dates for the last n days
   const getDateString = (daysAgo: number): string => {
@@ -18,64 +17,34 @@ import {
     return date.toISOString().split('T')[0];
   };
   
-  // Sleep data for the last 7 days
+  // Sleep data for only 3 days (today, 2 days ago, and 4 days ago)
   export const sleepData: SleepData[] = [
-    { date: getDateString(6), hoursSlept: 7.5, quality: 8, bedTime: '23:30', wakeTime: '07:00' },
-    { date: getDateString(5), hoursSlept: 6.2, quality: 6, bedTime: '00:15', wakeTime: '06:30' },
-    { date: getDateString(4), hoursSlept: 8.0, quality: 9, bedTime: '22:45', wakeTime: '06:45' },
-    { date: getDateString(3), hoursSlept: 7.8, quality: 8, bedTime: '23:00', wakeTime: '06:45' },
-    { date: getDateString(2), hoursSlept: 5.5, quality: 4, bedTime: '01:30', wakeTime: '07:00' },
-    { date: getDateString(1), hoursSlept: 7.2, quality: 7, bedTime: '23:15', wakeTime: '06:30' },
     { date: getDateString(0), hoursSlept: 8.5, quality: 9, bedTime: '22:30', wakeTime: '07:00' },
+    { date: getDateString(2), hoursSlept: 5.5, quality: 4, bedTime: '01:30', wakeTime: '07:00' },
+    { date: getDateString(4), hoursSlept: 8.0, quality: 9, bedTime: '22:45', wakeTime: '06:45' },
   ];
   
-  // Water intake data for the last 7 days
+  // Water intake data for the same 3 days
   export const waterData: WaterData[] = [
-    { date: getDateString(6), glasses: 5, target: 8 },
-    { date: getDateString(5), glasses: 6, target: 8 },
-    { date: getDateString(4), glasses: 8, target: 8 },
-    { date: getDateString(3), glasses: 7, target: 8 },
-    { date: getDateString(2), glasses: 4, target: 8 },
-    { date: getDateString(1), glasses: 6, target: 8 },
     { date: getDateString(0), glasses: 3, target: 8 },
+    { date: getDateString(2), glasses: 4, target: 8 },
+    { date: getDateString(4), glasses: 8, target: 8 },
   ];
   
-  // Mood data for the last 7 days
+  // Mood data for the same 3 days
   export const moodData: MoodData[] = [
-    { date: getDateString(6), mood: 'good', notes: 'Productive day at work' },
-    { date: getDateString(5), mood: 'neutral', notes: 'Feeling a bit tired' },
-    { date: getDateString(4), mood: 'great', notes: 'Amazing day outdoors' },
-    { date: getDateString(3), mood: 'good', notes: 'Good progress on project' },
-    { date: getDateString(2), mood: 'bad', notes: 'Stressed about deadline' },
-    { date: getDateString(1), mood: 'neutral', notes: 'Average day' },
     { date: getDateString(0), mood: 'good', notes: 'Feeling optimistic' },
+    { date: getDateString(2), mood: 'bad', notes: 'Stressed about deadline' },
+    { date: getDateString(4), mood: 'great', notes: 'Amazing day outdoors' },
   ];
   
-  // Activity data for the last 7 days
+  // Activity data for the same 3 days
   export const activityData: ActivityData[] = [
     { 
-      date: getDateString(6), 
-      steps: 8500, 
-      activeMinutes: 45, 
-      workouts: [{ type: 'Running', duration: 30 }] 
-    },
-    { 
-      date: getDateString(5), 
-      steps: 5200, 
-      activeMinutes: 20, 
-      workouts: [] 
-    },
-    { 
-      date: getDateString(4), 
-      steps: 12000, 
-      activeMinutes: 75, 
-      workouts: [{ type: 'Hiking', duration: 60 }, { type: 'Yoga', duration: 15 }] 
-    },
-    { 
-      date: getDateString(3), 
-      steps: 7800, 
-      activeMinutes: 35, 
-      workouts: [{ type: 'Cycling', duration: 25 }] 
+      date: getDateString(0), 
+      steps: 6700, 
+      activeMinutes: 30, 
+      workouts: [{ type: 'Strength Training', duration: 25 }] 
     },
     { 
       date: getDateString(2), 
@@ -84,56 +53,33 @@ import {
       workouts: [] 
     },
     { 
-      date: getDateString(1), 
-      steps: 9200, 
-      activeMinutes: 50, 
-      workouts: [{ type: 'Swimming', duration: 40 }] 
-    },
-    { 
-      date: getDateString(0), 
-      steps: 6700, 
-      activeMinutes: 30, 
-      workouts: [{ type: 'Strength Training', duration: 25 }] 
+      date: getDateString(4), 
+      steps: 12000, 
+      activeMinutes: 75, 
+      workouts: [{ type: 'Hiking', duration: 60 }, { type: 'Yoga', duration: 15 }] 
     },
   ];
   
-  // Journal entries
-  export const journalEntries: JournalEntry[] = [
+  // Journal entries mock data
+  export const mockJournalEntries: JournalEntry[] = [
     {
       id: '1',
-      date: getDateString(0),
-      content: "Today was a good day overall. I managed to drink enough water and got a good workout in. Feeling positive about my progress.",
-      tags: ['workout', 'hydration', 'positive'],
-      mood: 'good'
+      user_id: '1',
+      content: 'Had a great workout session today! Feeling energized.',
+      mood: 'great',
+      health_metrics: {
+        sleep_quality: 8,
+        mental_clarity: 9,
+        energy_level: 9,
+        exercise_minutes: 60,
+        water_glasses: 8
+      },
+      tags: ['workout', 'energy'],
+      symptoms: [],
+      created_at: '2024-03-15T10:00:00Z',
+      updated_at: '2024-03-15T10:00:00Z'
     },
-    {
-      id: '2',
-      date: getDateString(1),
-      content: "Feeling a bit tired today. Didn't sleep well last night. Need to focus on better sleep hygiene.",
-      tags: ['tired', 'sleep'],
-      mood: 'neutral'
-    },
-    {
-      id: '3',
-      date: getDateString(2),
-      content: "Stressful day at work. Missed my workout and didn't drink enough water. Tomorrow will be better.",
-      tags: ['stress', 'work'],
-      mood: 'bad'
-    },
-    {
-      id: '4',
-      date: getDateString(3),
-      content: "Great progress on my fitness goals today! Completed a full workout and ate healthy meals.",
-      tags: ['workout', 'nutrition', 'progress'],
-      mood: 'great'
-    },
-    {
-      id: '5',
-      date: getDateString(4),
-      content: "Amazing day outdoors. Went hiking with friends and enjoyed the fresh air. Feeling energized!",
-      tags: ['outdoors', 'friends', 'active'],
-      mood: 'great'
-    },
+    // ... other journal entries with similar structure
   ];
   
   // Health goals
@@ -216,88 +162,60 @@ import {
   export const healthChallenges: HealthChallenge[] = [
     {
       id: '1',
-      category: 'fitness',
-      title: 'Do 20 jumping jacks',
-      description: 'A quick exercise to get your heart rate up',
-      difficulty: 'easy'
+      category: 'activity',
+      title: '30-minute cardio workout',
+      description: 'Complete a cardio session to boost your energy',
+      difficulty: 'medium'
     },
     {
       id: '2',
-      category: 'mental',
-      title: 'Meditate for 5 minutes',
-      description: 'Take a moment to clear your mind and focus on your breathing',
+      category: 'mood',
+      title: '10-minute meditation',
+      description: 'Take a moment to clear your mind',
       difficulty: 'easy'
     },
     {
       id: '3',
-      category: 'nutrition',
-      title: 'Drink a glass of water',
-      description: "Hydration is important! Let's have a glass of water right now",
-      difficulty: 'easy'
-    },
-    {
-      id: '4',
       category: 'sleep',
-      title: 'No screens 30 minutes before bed',
-      description: 'Improve your sleep quality by avoiding blue light before bedtime',
+      title: 'Go to bed 30 minutes earlier',
+      description: 'Get some extra rest by turning in a bit earlier',
       difficulty: 'medium'
     },
     {
+      id: '4',
+      category: 'nutrition',
+      title: 'No added sugar today',
+      description: 'Cut out added sugars from your diet temporarily',
+      difficulty: 'hard'
+    },
+    {
       id: '5',
-      category: 'fitness',
-      title: 'Take a 15-minute walk',
-      description: 'Get some fresh air and move your body with a short walk',
+      category: 'water',
+      title: 'Drink 8 glasses of water',
+      description: 'Stay hydrated throughout the day',
       difficulty: 'medium'
     },
     {
       id: '6',
-      category: 'mental',
+      category: 'activity',
+      title: 'Take a 15-minute walk',
+      description: 'Get some light exercise and fresh air',
+      difficulty: 'easy'
+    },
+    {
+      id: '7',
+      category: 'mood',
       title: 'Write down 3 things you are grateful for',
       description: 'Practicing gratitude can improve your mental wellbeing',
       difficulty: 'easy'
     },
     {
-      id: '7',
-      category: 'nutrition',
-      title: 'Eat a fruit or vegetable with your next meal',
-      description: 'Add some nutrients to your diet with a healthy addition',
-      difficulty: 'easy'
-    },
-    {
       id: '8',
-      category: 'fitness',
-      title: 'Do 10 push-ups',
-      description: 'Build upper body strength with this classic exercise',
-      difficulty: 'medium'
-    },
-    {
-      id: '9',
-      category: 'mental',
-      title: 'Take a digital detox for 1 hour',
-      description: 'Step away from all screens and do something offline',
-      difficulty: 'medium'
-    },
-    {
-      id: '10',
-      category: 'sleep',
-      title: 'Go to bed 30 minutes earlier tonight',
-      description: 'Get some extra rest by turning in a bit earlier',
-      difficulty: 'medium'
-    },
-    {
-      id: '11',
-      category: 'nutrition',
-      title: 'No added sugar for the rest of the day',
-      description: 'Cut out added sugars from your diet temporarily',
-      difficulty: 'hard'
-    },
-    {
-      id: '12',
-      category: 'fitness',
+      category: 'activity',
       title: 'Hold a plank for 1 minute',
       description: 'Challenge your core strength with this exercise',
       difficulty: 'hard'
-    },
+    }
   ];
   
   // User profile
@@ -309,72 +227,6 @@ import {
     level: 7,
     experience: 3500,
     healthCoins: 240,
-    joinedAt: '2023-01-15'
+    joinedAt: '2023-01-15',
+    lastActivityDate: new Date(Date.now() - 86400000).toISOString().split('T')[0] // yesterday's date
   };
-  
-  // Leaderboard data
-  export const leaderboardData: LeaderboardEntry[] = [
-    {
-      userId: '2',
-      name: 'Sarah Miller',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-      score: 8750,
-      rank: 1,
-      streak: 12,
-      level: 9
-    },
-    {
-      userId: '3',
-      name: 'David Chen',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-      score: 7900,
-      rank: 2,
-      streak: 8,
-      level: 8
-    },
-    {
-      userId: '1', // Current user
-      name: 'Alex Johnson',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-      score: 7200,
-      rank: 3,
-      streak: 5,
-      level: 7
-    },
-    {
-      userId: '4',
-      name: 'Emma Wilson',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-      score: 6800,
-      rank: 4,
-      streak: 3,
-      level: 6
-    },
-    {
-      userId: '5',
-      name: 'Michael Brown',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-      score: 6200,
-      rank: 5,
-      streak: 4,
-      level: 6
-    },
-    {
-      userId: '6',
-      name: 'Olivia Garcia',
-      avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-      score: 5900,
-      rank: 6,
-      streak: 2,
-      level: 5
-    },
-    {
-      userId: '7',
-      name: 'James Wilson',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-      score: 5500,
-      rank: 7,
-      streak: 1,
-      level: 5
-    },
-  ];

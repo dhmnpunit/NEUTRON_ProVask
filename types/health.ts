@@ -1,4 +1,4 @@
-export type MoodType = 'terrible' | 'bad' | 'neutral' | 'good' | 'great';
+export type MoodType = 'great' | 'good' | 'neutral' | 'bad' | 'terrible';
 
 export interface SleepData {
   date: string;
@@ -45,21 +45,24 @@ export interface NutritionData {
 }
 
 export interface HealthMetrics {
-  sleepQuality: number;
-  mentalClarity: number;
-  energyLevel: number;
-  exerciseMinutes: number;
-  waterGlasses: number;
+  sleep_quality: number;
+  mental_clarity: number;
+  energy_level: number;
+  exercise_minutes: number;
+  water_glasses: number;
+  sleep_hours?: number; // Optional to maintain backward compatibility
 }
 
 export interface JournalEntry {
   id: string;
-  date: string;
+  user_id: string;
   content: string;
-  tags: string[];
   mood?: MoodType;
-  healthMetrics: HealthMetrics;
+  health_metrics: HealthMetrics;
+  tags: string[];
   symptoms: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface HealthGoal {
@@ -82,7 +85,7 @@ export interface Achievement {
 
 export interface HealthChallenge {
   id: string;
-  category: 'fitness' | 'mental' | 'nutrition' | 'sleep';
+  category: 'sleep' | 'water' | 'activity' | 'nutrition' | 'mood';
   title: string;
   description: string;
   difficulty: 'easy' | 'medium' | 'hard';
@@ -97,14 +100,5 @@ export interface UserProfile {
   experience: number;
   healthCoins: number;
   joinedAt: string;
-}
-
-export interface LeaderboardEntry {
-  userId: string;
-  name: string;
-  avatar?: string;
-  score: number;
-  rank: number;
-  streak: number;
-  level: number;
+  lastActivityDate?: string; // ISO string of the last date an activity was completed
 }

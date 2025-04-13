@@ -1,384 +1,374 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  SafeAreaView,
-  TextInput,
+  ActivityIndicator,
   Alert
 } from 'react-native';
 import { colors } from '@/constants/colors';
-import { useHealthStore } from '@/store/health-store';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { Calendar, Tag, Trash2, Edit2, Save, X } from 'lucide-react-native';
-import { MoodType } from '@/types/health';
+import { useAuth } from '@/context/AuthContext';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { PencilIcon, ClockIcon, TagIcon, TrashIcon } from 'react-native-heroicons/outline';
+import { getJournalEntryById, deleteJournalEntry } from '@/services/journalService';
+import { JournalEntry, MoodType } from '@/types/health';
+import { typography, spacing, radius, shadows, iconSizes } from '@/constants/design';
 
-export default function JournalEntryDetailScreen() {
-  const { id } = useLocalSearchParams();
+export default function JournalEntryScreen() {
   const router = useRouter();
-  const { 
-    journalEntries, 
-    updateJournalEntry, 
-    deleteJournalEntry 
-  } = useHealthStore();
-  
-  const entry = journalEntries.find(e => e.id === id);
-  
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(entry?.content || '');
-  const [editedTags, setEditedTags] = useState(entry?.tags.join(', ') || '');
-  
-  if (!entry) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ title: 'Entry Not Found' }} />
-        <View style={styles.notFoundContainer}>
-          <Text style={styles.notFoundText}>Journal entry not found</Text>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      month: 'long', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-  
-  const getMoodColor = (mood?: MoodType): string => {
-    switch (mood) {
-      case 'great':
-        return colors.success;
-      case 'good':
-        return colors.info;
-      case 'neutral':
-        return colors.textTertiary;
-      case 'bad':
-        return colors.warning;
-      case 'terrible':
-        return colors.danger;
-      default:
-        return colors.textTertiary;
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [entry, setEntry] = useState<JournalEntry | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      fetchEntry();
+    }
+  }, [id]);
+
+  const fetchEntry = async () => {
+    try {
+      setLoading(true);
+      const data = await getJournalEntryById(id as string);
+      setEntry(data);
+    } catch (error) {
+      console.error('Error fetching entry:', error);
+      Alert.alert('Error', 'Failed to load journal entry');
+    } finally {
+      setLoading(false);
     }
   };
-  
-  const handleSave = () => {
-    // Process tags from comma-separated string to array
-    const tagsArray = editedTags
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0);
-    
-    updateJournalEntry(entry.id, {
-      content: editedContent,
-      tags: tagsArray
-    });
-    
-    setIsEditing(false);
-  };
-  
-  const handleDelete = () => {
+
+  const handleDelete = async () => {
     Alert.alert(
       'Delete Entry',
-      'Are you sure you want to delete this journal entry? This action cannot be undone.',
+      'Are you sure you want to delete this entry? This action cannot be undone.',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Delete',
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
           style: 'destructive',
-          onPress: () => {
-            deleteJournalEntry(entry.id);
-            router.back();
+          onPress: async () => {
+            try {
+              await deleteJournalEntry(id as string);
+              router.replace('/logs');
+            } catch (error) {
+              console.error('Error deleting entry:', error);
+              Alert.alert('Error', 'Failed to delete journal entry');
+            }
           }
-        }
+        },
       ]
     );
   };
+
+  const getMoodEmoji = (mood?: MoodType): string => {
+    switch (mood) {
+      case 'great': return '😄';
+      case 'good': return '🙂';
+      case 'neutral': return '😐';
+      case 'bad': return '🙁';
+      case 'terrible': return '😫';
+      default: return '';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
   
-  return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Journal Entry',
-          headerRight: () => (
-            <View style={styles.headerButtons}>
-              {isEditing ? (
-                <>
-                  <TouchableOpacity 
-                    style={styles.headerButton}
-                    onPress={() => setIsEditing(false)}
-                  >
-                    <X size={20} color={colors.danger} />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.headerButton}
-                    onPress={handleSave}
-                  >
-                    <Save size={20} color={colors.success} />
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <TouchableOpacity 
-                    style={styles.headerButton}
-                    onPress={() => setIsEditing(true)}
-                  >
-                    <Edit2 size={20} color={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.headerButton}
-                    onPress={handleDelete}
-                  >
-                    <Trash2 size={20} color={colors.danger} />
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          )
-        }} 
-      />
-      
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
+  const HeaderRight = () => (
+    <View style={styles.headerActions}>
+      <TouchableOpacity 
+        style={styles.headerButton}
+        onPress={() => router.push(`/logs/edit/${id}`)}
       >
-        <View style={styles.header}>
-          <View style={styles.dateContainer}>
-            <Calendar size={16} color={colors.textSecondary} style={styles.dateIcon} />
-            <Text style={styles.date}>{formatDate(entry.date)}</Text>
-          </View>
-          
-          {entry.mood && (
-            <View style={[
-              styles.moodBadge, 
-              { backgroundColor: getMoodColor(entry.mood) + '20' }
-            ]}>
-              <Text style={[
-                styles.moodText, 
-                { color: getMoodColor(entry.mood) }
-              ]}>
-                {entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)}
-              </Text>
-            </View>
-          )}
+        <PencilIcon size={iconSizes.medium} color={colors.text} />
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.headerButton}
+        onPress={handleDelete}
+      >
+        <TrashIcon size={iconSizes.medium} color={colors.danger} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <ScreenWrapper>
+      <Stack.Screen
+        options={{
+          title: "journal entry",
+          headerRight: () => <HeaderRight />,
+          headerTitleStyle: styles.headerTitle,
+        }}
+      />
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
-        
-        {isEditing ? (
-          <View style={styles.editContainer}>
-            <Text style={styles.editLabel}>Journal Entry</Text>
-            <TextInput
-              style={styles.editInput}
-              value={editedContent}
-              onChangeText={setEditedContent}
-              multiline
-              placeholder="Write your journal entry here..."
-              placeholderTextColor={colors.textTertiary}
-            />
-            
-            <Text style={styles.editLabel}>Tags (comma-separated)</Text>
-            <TextInput
-              style={styles.editTagsInput}
-              value={editedTags}
-              onChangeText={setEditedTags}
-              placeholder="e.g. workout, stress, sleep"
-              placeholderTextColor={colors.textTertiary}
-            />
-          </View>
-        ) : (
-          <>
-            <Text style={styles.content}>{entry.content}</Text>
-            
+      ) : entry ? (
+        <>
+          <ScrollView style={styles.container}>
+            <View style={styles.dateContainer}>
+              <ClockIcon size={iconSizes.small} color={colors.textSecondary} style={styles.dateIcon} />
+              <Text style={styles.date}>{formatDate(entry.created_at)}</Text>
+            </View>
+
+            {entry.mood && (
+              <View style={styles.moodContainer}>
+                <Text style={styles.moodEmoji}>{getMoodEmoji(entry.mood)}</Text>
+                <Text style={styles.moodText}>Feeling {entry.mood}</Text>
+              </View>
+            )}
+
+            <View style={styles.contentContainer}>
+              <Text style={styles.content}>{entry.content}</Text>
+            </View>
+
             {entry.tags.length > 0 && (
-              <View style={styles.tagsContainer}>
-                <Tag size={16} color={colors.textSecondary} style={styles.tagsIcon} />
-                <View style={styles.tags}>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Tags</Text>
+                <View style={styles.tagsContainer}>
                   {entry.tags.map((tag, index) => (
                     <View key={index} style={styles.tag}>
-                      <Text style={styles.tagText}>#{tag}</Text>
+                      <TagIcon size={iconSizes.small} color={colors.primary} style={styles.tagIcon} />
+                      <Text style={styles.tagText}>{tag}</Text>
                     </View>
                   ))}
                 </View>
               </View>
             )}
-          </>
-        )}
-        
-        <View style={styles.aiInsightContainer}>
-          <Text style={styles.aiInsightTitle}>AI Health Insights</Text>
-          <Text style={styles.aiInsightText}>
-            Based on your journal entry, it seems like you had a {entry.mood || "neutral"} day. 
-            {entry.mood === 'great' || entry.mood === 'good' 
-              ? " Keep up the positive momentum by maintaining your healthy habits."
-              : entry.mood === 'bad' || entry.mood === 'terrible'
-                ? " Consider taking some time for self-care activities like meditation or a short walk to improve your mood."
-                : " Try to identify what factors contributed to your day and how you might improve tomorrow."}
-          </Text>
+
+            {entry.symptoms.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Symptoms</Text>
+                <View style={styles.tagsContainer}>
+                  {entry.symptoms.map((symptom, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText}>{symptom}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Health Metrics</Text>
+              <View style={styles.metricsContainer}>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Sleep Quality</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.sleep_quality}/10</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Mental Clarity</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.mental_clarity}/10</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Energy Level</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.energy_level}/10</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Exercise</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.exercise_minutes} min</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Water</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.water_glasses} glasses</Text>
+                </View>
+              </View>
+            </View>
+            
+            {/* Add space at the bottom for fixed button */}
+            <View style={styles.bottomSpace} />
+          </ScrollView>
           
-          <Text style={styles.aiInsightText}>
-            {entry.tags.includes('workout') 
-              ? "Great job on your workout! Regular exercise is linked to improved mood and energy levels."
-              : entry.tags.includes('stress')
-                ? "I notice you mentioned stress. Try deep breathing exercises or mindfulness to help manage stress levels."
-                : entry.tags.includes('sleep')
-                  ? "Sleep quality has a significant impact on overall health. Aim for 7-8 hours of quality sleep each night."
-                  : "Remember that consistency in healthy habits leads to long-term wellbeing improvements."}
-          </Text>
+          {/* Fixed delete button at the bottom */}
+          <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
+              <TrashIcon size={iconSizes.medium} color="#FFFFFF" style={styles.deleteIcon} />
+              <Text style={styles.deleteButtonText}>Delete Journal Entry</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Entry not found</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  headerTitle: {
+    fontSize: typography.h2.fontSize,
+    fontWeight: typography.h2.fontWeight,
+    color: typography.h2.color,
+  },
+  headerActions: {
+    flexDirection: 'row',
+  },
+  headerButton: {
+    padding: spacing.sm,
+    marginLeft: spacing.sm,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollView: {
-    flex: 1,
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    padding: spacing.md,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: spacing.md,
   },
   dateIcon: {
-    marginRight: 6,
+    marginRight: spacing.sm,
   },
   date: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: typography.caption.fontSize,
+    color: typography.caption.color,
   },
-  moodBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
+  moodContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  moodEmoji: {
+    fontSize: 28,
+    marginRight: spacing.sm,
   },
   moodText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: typography.body.fontSize,
+    color: typography.body.color,
+  },
+  contentContainer: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    borderRadius: radius.medium,
+    marginBottom: spacing.md,
+    ...shadows.small,
   },
   content: {
-    fontSize: 16,
-    color: colors.text,
-    lineHeight: 24,
-    marginBottom: 24,
+    fontSize: typography.body.fontSize,
+    lineHeight: typography.body.lineHeight,
+    color: typography.body.color,
+  },
+  section: {
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: typography.h3.fontSize,
+    fontWeight: typography.h3.fontWeight,
+    color: typography.h3.color,
+    marginBottom: spacing.sm,
   },
   tagsContainer: {
-    flexDirection: 'row',
-    marginBottom: 24,
-    alignItems: 'flex-start',
-  },
-  tagsIcon: {
-    marginRight: 8,
-    marginTop: 2,
-  },
-  tags: {
-    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   tag: {
-    marginRight: 12,
-    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${colors.primaryLight}99`,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.small,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  tagIcon: {
+    marginRight: spacing.xs,
   },
   tagText: {
-    fontSize: 14,
-    color: colors.textSecondary,
+    fontSize: typography.caption.fontSize,
+    color: colors.primary,
   },
-  aiInsightContainer: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
+  metricsContainer: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    borderRadius: radius.medium,
+    ...shadows.small,
   },
-  aiInsightTitle: {
-    fontSize: 16,
+  metric: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  metricLabel: {
+    fontSize: typography.body.fontSize,
+    color: typography.body.color,
+  },
+  metricValue: {
+    fontSize: typography.body.fontSize,
     fontWeight: '600',
     color: colors.primary,
-    marginBottom: 12,
   },
-  aiInsightText: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  headerButtons: {
-    flexDirection: 'row',
-  },
-  headerButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  editContainer: {
-    marginBottom: 24,
-  },
-  editLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  editInput: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: colors.text,
-    minHeight: 150,
-    textAlignVertical: 'top',
-    marginBottom: 16,
-  },
-  editTagsInput: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 8,
-  },
-  notFoundContainer: {
+  errorContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  errorText: {
+    fontSize: typography.body.fontSize,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  bottomSpace: {
+    height: 80, // Space for the fixed button
+  },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  deleteButton: {
+    backgroundColor: colors.danger,
+    borderRadius: radius.medium,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    paddingVertical: spacing.md,
   },
-  notFoundText: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    marginBottom: 16,
+  deleteIcon: {
+    marginRight: spacing.sm,
   },
-  backButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: '#fff',
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: typography.body.fontSize,
     fontWeight: '600',
-    fontSize: 16,
   },
 });

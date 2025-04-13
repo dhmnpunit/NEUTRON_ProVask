@@ -1,8 +1,9 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { Home, BookOpen, BarChart2, Trophy, Dice5 } from 'lucide-react-native';
-import { View, Platform, StatusBar } from 'react-native';
+import { HomeIcon, BookOpenIcon, ChatBubbleLeftRightIcon, CubeIcon, ChartBarIcon } from 'react-native-heroicons/outline';
+import { View, Platform, StatusBar, StyleSheet } from 'react-native';
+import { fonts } from "@/constants/design";
 
 const TabBarBackground = () => {
   const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
@@ -17,6 +18,19 @@ const TabBarBackground = () => {
     }} />
   );
 };
+
+const styles = StyleSheet.create({
+  tabBarBackground: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 50,
+    backgroundColor: colors.background,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+  },
+});
 
 export default function TabLayout() {
   return (
@@ -36,6 +50,7 @@ export default function TabLayout() {
           tabBarLabelStyle: {
             fontSize: 12,
             fontWeight: '500',
+            fontFamily: fonts.headingMedium,
           },
           headerStyle: {
             backgroundColor: colors.background,
@@ -47,6 +62,7 @@ export default function TabLayout() {
           headerTitleStyle: {
             fontWeight: '600',
             fontSize: 18,
+            fontFamily: fonts.headingSemiBold,
           },
           headerTintColor: colors.text,
         }}
@@ -57,7 +73,7 @@ export default function TabLayout() {
             title: 'Dashboard',
             tabBarLabel: 'Home',
             tabBarIcon: ({ color, size }) => (
-              <Home size={size} color={color} />
+              <HomeIcon size={size} color={color} />
             ),
           }}
         />
@@ -67,37 +83,37 @@ export default function TabLayout() {
             title: 'Journal',
             tabBarLabel: 'Journal',
             tabBarIcon: ({ color, size }) => (
-              <BookOpen size={size} color={color} />
+              <BookOpenIcon size={size} color={color} />
             ),
           }}
         />
         <Tabs.Screen
           name="stats"
           options={{
-            title: 'Statistics',
+            title: 'Stats',
             tabBarLabel: 'Stats',
             tabBarIcon: ({ color, size }) => (
-              <BarChart2 size={size} color={color} />
+              <ChartBarIcon size={size} color={color} />
             ),
           }}
         />
         <Tabs.Screen
-          name="leaderboard"
+          name="flip-dice"
           options={{
-            title: 'Leaderboard',
-            tabBarLabel: 'Compete',
+            title: 'Flip Dice',
+            tabBarLabel: 'Challenges',
             tabBarIcon: ({ color, size }) => (
-              <Trophy size={size} color={color} />
+              <CubeIcon size={size} color={color} />
             ),
           }}
         />
         <Tabs.Screen
-          name="dice"
+          name="chat"
           options={{
-            title: 'Health Dice',
-            tabBarLabel: 'Dice',
+            title: 'Assistant',
+            tabBarLabel: 'Assistant',
             tabBarIcon: ({ color, size }) => (
-              <Dice5 size={size} color={color} />
+              <ChatBubbleLeftRightIcon size={size} color={color} />
             ),
           }}
         />

@@ -1,159 +1,192 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { format } from 'date-fns';
 import { colors } from '@/constants/colors';
-import { JournalEntry, MoodType } from '@/types/health';
-import { Calendar, Tag } from 'lucide-react-native';
+import { typography, spacing, radius, fonts } from '@/constants/design';
+import { GradientCard, AccentLine, CardPattern } from './VisualEnhancements';
 
-interface JournalEntryCardProps {
-  entry: JournalEntry;
-  onPress: (entry: JournalEntry) => void;
+export interface JournalEntryCardProps {
+  date: Date;
+  title: string;
+  content: string;
+  mood?: string;
+  moodEmoji?: string;
+  onPress?: () => void;
 }
 
-const getMoodColor = (mood?: MoodType): string => {
-  switch (mood) {
-    case 'great':
-      return colors.success;
-    case 'good':
-      return colors.info;
-    case 'neutral':
-      return colors.textTertiary;
-    case 'bad':
-      return colors.warning;
-    case 'terrible':
-      return colors.danger;
-    default:
-      return colors.textTertiary;
-  }
-};
-
 export const JournalEntryCard: React.FC<JournalEntryCardProps> = ({
-  entry,
+  date,
+  title,
+  content,
+  mood,
+  moodEmoji,
   onPress,
 }) => {
-  const moodColor = getMoodColor(entry.mood);
-  
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
+  const [isPressed, setIsPressed] = useState(false);
+
+  const formatDate = (date: Date) => {
+    return {
+      day: format(date, 'd'),
+      month: format(date, 'MMM'),
+    };
   };
 
+  const getMoodColor = (mood?: string) => {
+    if (!mood) return colors.neutral;
+    
+    switch(mood.toLowerCase()) {
+      case 'happy':
+      case 'excited':
+      case 'joyful':
+        return colors.success;
+      case 'sad':
+      case 'depressed':
+      case 'down':
+        return colors.warning;
+      case 'angry':
+      case 'frustrated':
+      case 'annoyed':
+        return colors.error;
+      case 'calm':
+      case 'peaceful':
+      case 'relaxed':
+        return colors.info;
+      default:
+        return colors.accent;
+    }
+  };
+
+  const { day, month } = formatDate(date);
+  const moodColor = getMoodColor(mood);
+  
   return (
-    <TouchableOpacity 
-      style={styles.container} 
-      onPress={() => onPress(entry)}
-      activeOpacity={0.7}
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => setIsPressed(true)}
+      onPressOut={() => setIsPressed(false)}
+      style={({ pressed }) => [
+        styles.container,
+        pressed && styles.pressed,
+      ]}
     >
-      <View style={[styles.moodIndicator, { backgroundColor: moodColor }]} />
-      <View style={styles.content}>
-        <View style={styles.header}>
+      <GradientCard style={styles.card}>
+        <CardPattern />
+        <View style={styles.contentContainer}>
           <View style={styles.dateContainer}>
-            <Calendar size={14} color={colors.textSecondary} />
-            <Text style={styles.date}>{formatDate(entry.date)}</Text>
+            <Text style={styles.day}>{day}</Text>
+            <Text style={styles.month}>{month}</Text>
           </View>
-          {entry.mood && (
-            <View style={[styles.moodBadge, { backgroundColor: moodColor + '20' }]}>
-              <Text style={[styles.moodText, { color: moodColor }]}>
-                {entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)}
+          
+          <View style={styles.divider}>
+            <AccentLine color={moodColor} style={styles.accentLine} />
+          </View>
+          
+          <View style={styles.textContent}>
+            <View style={styles.headerRow}>
+              <Text style={styles.title} numberOfLines={1}>
+                {title}
               </Text>
+              {moodEmoji && (
+                <Text style={styles.moodEmoji}>{moodEmoji}</Text>
+              )}
             </View>
-          )}
-        </View>
-        
-        <Text style={styles.contentText} numberOfLines={3}>
-          {entry.content}
-        </Text>
-        
-        {entry.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
-            <Tag size={14} color={colors.textSecondary} style={styles.tagIcon} />
-            <View style={styles.tags}>
-              {entry.tags.map((tag, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>#{tag}</Text>
-                </View>
-              ))}
-            </View>
+            
+            <Text style={styles.preview} numberOfLines={2}>
+              {content}
+            </Text>
+            
+            {mood && (
+              <View style={[styles.moodTag, { backgroundColor: `${moodColor}20` }]}>
+                <Text style={[styles.moodText, { color: moodColor }]}>
+                  {mood}
+                </Text>
+              </View>
+            )}
           </View>
-        )}
-      </View>
-    </TouchableOpacity>
+        </View>
+      </GradientCard>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    marginBottom: 16,
-    flexDirection: 'row',
+    marginVertical: spacing.xs,
+    width: '100%',
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  card: {
+    padding: 0,
     overflow: 'hidden',
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  moodIndicator: {
-    width: 4,
-    height: '100%',
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
   },
-  content: {
+  dateContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+    width: 60,
+    backgroundColor: `${colors.primary}10`,
+  },
+  day: {
+    ...typography.h3,
+    color: colors.text,
+    fontWeight: 'bold',
+    fontFamily: fonts.headingBold,
+  },
+  month: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+  divider: {
+    marginVertical: spacing.sm,
+  },
+  accentLine: {
+    height: '90%',
+    alignSelf: 'center',
+    borderRadius: radius.pill,
+  },
+  textContent: {
     flex: 1,
-    padding: 16,
+    padding: spacing.md,
+    justifyContent: 'space-between',
   },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  title: {
+    ...typography.h3,
+    flex: 1,
+    color: colors.text,
+    fontWeight: 'bold',
+    fontFamily: fonts.headingBold,
   },
-  date: {
-    fontSize: 12,
+  moodEmoji: {
+    fontSize: 18,
+    marginLeft: spacing.xs,
+  },
+  preview: {
+    ...typography.body,
     color: colors.textSecondary,
-    marginLeft: 4,
+    marginBottom: spacing.sm,
   },
-  moodBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
+  moodTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: radius.pill,
   },
   moodText: {
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '500',
-  },
-  contentText: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    marginTop: 12,
-    alignItems: 'center',
-  },
-  tagIcon: {
-    marginRight: 6,
-  },
-  tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    flex: 1,
-  },
-  tag: {
-    marginRight: 8,
-    marginBottom: 4,
-  },
-  tagText: {
-    fontSize: 12,
-    color: colors.textSecondary,
   },
 });

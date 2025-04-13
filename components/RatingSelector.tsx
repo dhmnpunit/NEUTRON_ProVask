@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '@/constants/colors';
+import { typography, spacing, radius, shadows } from '@/constants/design';
 
 interface RatingSelectorProps {
   title: string;
@@ -53,18 +54,18 @@ export const RatingSelector: React.FC<RatingSelectorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: 16,
+    fontSize: typography.body.fontSize,
     fontWeight: '500',
-    color: colors.text,
-    marginBottom: 4,
+    color: typography.body.color,
+    marginBottom: spacing.xs,
   },
   description: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 12,
+    fontSize: typography.bodySmall.fontSize,
+    color: typography.caption.color,
+    marginBottom: spacing.md,
   },
   optionsContainer: {
     flexDirection: 'row',
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
   option: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.circle,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
@@ -83,9 +84,10 @@ const styles = StyleSheet.create({
   selectedOption: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
+    ...shadows.small,
   },
   optionText: {
-    fontSize: 16,
+    fontSize: typography.body.fontSize,
     color: colors.text,
   },
   selectedOptionText: {

@@ -1,234 +1,388 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
-  Text, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  TextInput
+  TextInput,
+  RefreshControl,
+  ActivityIndicator,
+  Text
 } from 'react-native';
 import { colors } from '@/constants/colors';
-import { useHealthStore } from '@/store/health-store';
-import { LogCard } from '@/components/LogCard';
-import { JournalEntry, MoodType } from '@/types/health';
-import { Plus, Search, Filter, Coffee, Utensils, Moon, Droplet } from 'lucide-react-native';
+import { typography, spacing, radius, shadows, iconSizes, fonts } from '@/constants/design';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { JournalEntry, MoodType } from '@/types/health';
+import { getJournalEntries } from '@/services/journalService';
+import { LogCard } from '@/components/LogCard';
+import { EmptyState } from '@/components/EmptyState';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { Search, Filter, Plus, CalendarDays, BookOpen } from 'lucide-react-native';
+
+// Helper function to get mood emojis based on mood type
+const getMoodEmoji = (mood?: MoodType): string => {
+  if (!mood) return '';
+  
+  switch(mood) {
+    case 'great': return '😊';
+    case 'good': return '🙂';
+    case 'neutral': return '😐';
+    case 'bad': return '😔';
+    case 'terrible': return '😡';
+    default: return '';
+  }
+};
+
+// Get filter display name
+const getFilterDisplayName = (filter: 'all' | 'today' | 'week' | 'month'): string => {
+  switch (filter) {
+    case 'all': return 'all';
+    case 'today': return 'today';
+    case 'week': return 'this week';
+    case 'month': return 'this month';
+    default: return 'all';
+  }
+};
 
 export default function LogsScreen() {
   const router = useRouter();
-  const { journalEntries } = useHealthStore();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [showFilterOptions, setShowFilterOptions] = useState(false);
+
+  const fetchEntries = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const data = await getJournalEntries(user.id);
+      setEntries(data);
+    } catch (error) {
+      console.error('Error fetching entries:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
   
-  // Filter entries based on search
-  const filteredEntries = journalEntries.filter(entry => {
-    return searchQuery === '' || 
-      entry.content.toLowerCase().includes(searchQuery.toLowerCase());
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchEntries();
+  };
+
+  const filteredEntries = entries.filter(entry => {
+    // Text search filter
+    const matchesSearch = searchQuery === '' || 
+      entry.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    if (!matchesSearch) return false;
+    
+    // Time-based filter
+    if (activeFilter === 'all') return true;
+    
+    const entryDate = new Date(entry.created_at);
+    const today = new Date();
+    
+    if (activeFilter === 'today') {
+      return entryDate.getDate() === today.getDate() &&
+        entryDate.getMonth() === today.getMonth() &&
+        entryDate.getFullYear() === today.getFullYear();
+    }
+    
+    if (activeFilter === 'week') {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(today.getDate() - 7);
+      return entryDate >= oneWeekAgo;
+    }
+    
+    if (activeFilter === 'month') {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(today.getMonth() - 1);
+      return entryDate >= oneMonthAgo;
+    }
+    
+    return true;
   });
   
-  // Get mood emoji
-  const getMoodEmoji = (mood?: MoodType): string => {
-    switch (mood) {
-      case 'great': return '😄';
-      case 'good': return '🙂';
-      case 'neutral': return '😐';
-      case 'bad': return '🙁';
-      case 'terrible': return '😫';
-      default: return '😐';
-    }
-  };
-  
-  const handleEntryPress = (entry: JournalEntry) => {
-    // Navigate to entry detail
-    router.push({
-      pathname: '/logs/[id]',
-      params: { id: entry.id }
-    });
-  };
-  
   return (
-    <ScreenWrapper>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>your health logs</Text>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={() => router.push('/logs/add')}
-        >
-          <Plus size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader 
+        title="journal"
+        elevated
+      />
       
       <View style={styles.searchContainer}>
-        <Search size={20} color={colors.textTertiary} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="search your logs..."
-          placeholderTextColor={colors.textTertiary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color={colors.textSecondary} />
+        <View style={styles.searchInputContainer}>
+          <Search size={iconSizes.small} color={colors.textTertiary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search journal entries..."
+            placeholderTextColor={colors.textTertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.filterIconButton}
+          onPress={() => setShowFilterOptions(!showFilterOptions)}
+        >
+          <Filter size={iconSizes.small} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
-      
-      <View style={styles.categoriesContainer}>
-        <TouchableOpacity style={[styles.categoryButton, styles.categoryButtonActive]}>
-          <Text style={[styles.categoryText, styles.categoryTextActive]}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryButton}>
-          <Utensils size={16} color={colors.textSecondary} style={styles.categoryIcon} />
-          <Text style={styles.categoryText}>Food</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryButton}>
-          <Droplet size={16} color={colors.textSecondary} style={styles.categoryIcon} />
-          <Text style={styles.categoryText}>Water</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryButton}>
-          <Moon size={16} color={colors.textSecondary} style={styles.categoryIcon} />
-          <Text style={styles.categoryText}>Sleep</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <ScrollView 
-        style={styles.entriesContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredEntries.length > 0 ? (
-          filteredEntries.map((entry) => (
-            <LogCard
-              key={entry.id}
-              title={entry.date}
-              feeling={entry.mood}
-              feelingEmoji={getMoodEmoji(entry.mood)}
-              notes={entry.content}
-              onPress={() => handleEntryPress(entry)}
-            />
-          ))
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No logs found</Text>
-            <Text style={styles.emptyText}>
-              {searchQuery
-                ? "Try adjusting your search"
-                : "Start logging to track your health journey"}
-            </Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => router.push('/logs/add')}
+
+      {showFilterOptions && (
+        <>
+          <TouchableOpacity 
+            style={styles.filterOverlay}
+            activeOpacity={0.5}
+            onPress={() => setShowFilterOptions(false)}
+          />
+          <View style={styles.filterOptionsContainer}>
+            <View style={styles.filterOptionsHeader}>
+              <Text style={styles.filterOptionsTitle}>filter by</Text>
+              <TouchableOpacity onPress={() => setShowFilterOptions(false)}>
+                <Text style={styles.filterOptionsDone}>done</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.filterOption, activeFilter === 'today' && styles.activeFilterOption]} 
+              onPress={() => {
+                setActiveFilter('today');
+                setShowFilterOptions(false);
+              }}
             >
-              <Text style={styles.emptyButtonText}>Create First Log</Text>
+              <Text style={[styles.filterOptionText, activeFilter === 'today' && styles.activeFilterOptionText]}>today</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.filterOption, activeFilter === 'week' && styles.activeFilterOption]} 
+              onPress={() => {
+                setActiveFilter('week');
+                setShowFilterOptions(false);
+              }}
+            >
+              <Text style={[styles.filterOptionText, activeFilter === 'week' && styles.activeFilterOptionText]}>this week</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.filterOption, activeFilter === 'month' && styles.activeFilterOption]} 
+              onPress={() => {
+                setActiveFilter('month');
+                setShowFilterOptions(false);
+              }}
+            >
+              <Text style={[styles.filterOptionText, activeFilter === 'month' && styles.activeFilterOptionText]}>this month</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.filterOption, activeFilter === 'all' && styles.activeFilterOption]} 
+              onPress={() => {
+                setActiveFilter('all');
+                setShowFilterOptions(false);
+              }}
+            >
+              <Text style={[styles.filterOptionText, activeFilter === 'all' && styles.activeFilterOptionText]}>all entries</Text>
             </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
-    </ScreenWrapper>
+        </>
+      )}
+
+      {loading && !refreshing ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <ScrollView 
+          style={styles.entriesContainer}
+          contentContainerStyle={[
+            styles.entriesContentContainer,
+            filteredEntries.length === 0 && styles.emptyContentContainer
+          ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+        >
+          {filteredEntries.length === 0 ? (
+            <EmptyState
+              title="No journal entries found"
+              description={searchQuery ? "No entries match your search" : "Start tracking your health by creating a new journal entry"}
+              icon={<BookOpen size={36} color={colors.primary} />}
+              action={{
+                title: "Add First Entry",
+                onPress: () => router.push('/logs/add')
+              }}
+              centered
+              gradient
+            />
+          ) : (
+            filteredEntries.map(entry => (
+              <LogCard
+                key={entry.id}
+                title={`Health Log - ${new Date(entry.created_at).toLocaleDateString()}`}
+                content={entry.content}
+                symptoms={entry.symptoms}
+                date={entry.created_at}
+                tags={entry.tags}
+                feelingEmoji={getMoodEmoji(entry.mood)}
+                feeling={entry.mood}
+                metrics={{
+                  water: entry.health_metrics.water_glasses,
+                  sleep: entry.health_metrics.sleep_hours,
+                  exercise: entry.health_metrics.exercise_minutes
+                }}
+                onPress={() => router.push(`/logs/${entry.id}`)}
+              />
+            ))
+          )}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
   searchContainer: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.background,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 12,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
     height: 44,
+    flex: 1,
+    marginRight: spacing.md,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: spacing.sm,
+    opacity: 0.6,
   },
   searchInput: {
     flex: 1,
     height: 44,
     color: colors.text,
-    fontSize: 16,
+    fontSize: typography.body.fontSize,
   },
-  filterButton: {
-    padding: 8,
-  },
-  categoriesContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    marginBottom: 12,
-  },
-  categoryButton: {
-    flexDirection: 'row',
+  filterIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.circle,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    marginHorizontal: 4,
-  },
-  categoryButtonActive: {
-    backgroundColor: colors.primary,
-  },
-  categoryIcon: {
-    marginRight: 4,
-  },
-  categoryText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  categoryTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '500',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   entriesContainer: {
     flex: 1,
-    padding: 16,
   },
-  emptyContainer: {
-    alignItems: 'center',
+  entriesContentContainer: {
+    padding: spacing.md,
+  },
+  emptyContentContainer: {
+    flexGrow: 1,
+  },
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
-    padding: 24,
-    marginTop: 40,
+    alignItems: 'center',
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  filterOptionsContainer: {
+    position: 'absolute',
+    top: 'auto',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopLeftRadius: radius.large,
+    borderTopRightRadius: radius.large,
+    zIndex: 10,
+    ...shadows.medium
+  },
+  filterOptionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: spacing.md,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  filterOptionsTitle: {
+    ...typography.h3,
     color: colors.text,
-    marginBottom: 8,
+    fontFamily: fonts.medium,
   },
-  emptyText: {
+  filterOptionsDone: {
+    ...typography.body,
     fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
+    color: colors.primary,
+    fontFamily: fonts.medium,
   },
-  emptyButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+  filterOption: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: spacing.sm,
+    backgroundColor: colors.card,
+    marginBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  emptyButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  activeFilterOption: {
+    backgroundColor: `${colors.primary}15`,
+    borderColor: colors.primary,
+  },
+  filterOptionText: {
+    ...typography.body,
     fontSize: 16,
+    color: colors.text,
+  },
+  activeFilterOptionText: {
+    color: colors.primary,
+    fontFamily: fonts.medium,
+  },
+  filterOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 5,
   },
 });
