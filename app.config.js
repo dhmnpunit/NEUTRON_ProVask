@@ -14,14 +14,18 @@ export default {
     resizeMode: "contain",
     backgroundColor: "#ffffff"
   },
+  assetBundlePatterns: ["**/*"],
   ios: {
-    supportsTablet: true
+    supportsTablet: true,
+    bundleIdentifier: "com.provask.app"
   },
   android: {
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
       backgroundColor: "#ffffff"
-    }
+    },
+    package: "com.provask.app",
+    permissions: ["INTERNET"]
   },
   plugins: ["expo-router"],
   experiments: {
@@ -34,8 +38,9 @@ export default {
     "./assets/fonts/RethinkSans-Bold.ttf"
   ],
   extra: {
-    // Access values from the .env file
-    geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || null,
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
     eas: {
       projectId: "your-project-id"
     }
