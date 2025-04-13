@@ -18,6 +18,11 @@ import { SleepData, WaterData, MoodData, ActivityData, JournalEntry } from '@/ty
 // Regular expression to validate UUID format
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Helper function to validate UUID
+const isValidUUID = (id: string | undefined | null): boolean => {
+  return !!id && UUID_REGEX.test(id);
+};
+
 const Stats = () => {
   const { 
     sleepData, 
@@ -38,6 +43,7 @@ const Stats = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actualJournalCount, setActualJournalCount] = useState<number>(0);
+  const [actualUserId, setActualUserId] = useState<string | null>(null);
 
   // Fetch real data from Supabase
   useEffect(() => {
@@ -57,12 +63,15 @@ const Stats = () => {
         }
         
         // Validate the UUID format
-        if (!UUID_REGEX.test(userId)) {
+        if (!isValidUUID(userId)) {
           console.error('Invalid UUID format for user ID:', userId);
-          setError('Invalid user ID format. Please log out and log in again.');
+          setError('User ID format not recognized. Using sample data instead.');
           setDataLoading(false);
           return;
         }
+        
+        // Store the valid UUID for later use
+        setActualUserId(userId);
         
         // Fetch journal entries that contain health metrics
         const { data: entriesData, error: entriesError } = await supabase
@@ -77,6 +86,8 @@ const Stats = () => {
         } else if (entriesData) {
           // Set actual journal entries count
           setActualJournalCount(entriesData.length);
+          
+          console.log('Fetched journal entries:', entriesData.length);
           
           // Process entries to extract health metrics
           const today = new Date();
@@ -96,7 +107,7 @@ const Stats = () => {
           entriesData.forEach(entry => {
             const entryDate = format(parseISO(entry.created_at), 'yyyy-MM-dd');
             
-            // Extract sleep data
+            // Extract sleep data if available
             if (entry.health_metrics?.sleep_quality) {
               extractedSleepData.push({
                 date: entryDate,
@@ -107,7 +118,7 @@ const Stats = () => {
               });
             }
             
-            // Extract water data
+            // Extract water data if available
             if (entry.health_metrics?.water_glasses) {
               extractedWaterData.push({
                 date: entryDate,
@@ -116,7 +127,7 @@ const Stats = () => {
               });
             }
             
-            // Extract mood data
+            // Extract mood data if available
             if (entry.mood) {
               extractedMoodData.push({
                 date: entryDate,
@@ -139,30 +150,58 @@ const Stats = () => {
             }
           });
           
-          // Only use extracted data from the database, not mock data
+          console.log('Extracted data counts:', {
+            sleep: extractedSleepData.length,
+            water: extractedWaterData.length,
+            mood: extractedMoodData.length,
+            activity: extractedActivityData.length
+          });
+          
+          // Clear previous data from the store to avoid mixing mock and real data
+          // Then add the real data from the database
+          
+          // Only add extracted data if we have any
           if (extractedSleepData.length > 0) {
-            // Replace store sleep data with actual data
-            extractedSleepData.forEach(data => addSleepData(data));
+            // To truly replace the data, we need to reset the store's data
+            // Add a delay to ensure all data is cleared before adding new data
+            setTimeout(() => {
+              // Replace all sleep data with actual data
+              useHealthStore.setState({ sleepData: extractedSleepData });
+            }, 100);
+          } else {
+            console.log('No sleep data found in journal entries');
           }
           
           if (extractedWaterData.length > 0) {
-            // Replace store water data with actual data
-            extractedWaterData.forEach(data => addWaterData(data));
+            setTimeout(() => {
+              // Replace all water data with actual data
+              useHealthStore.setState({ waterData: extractedWaterData });
+            }, 200);
+          } else {
+            console.log('No water data found in journal entries');
           }
           
           if (extractedMoodData.length > 0) {
-            // Replace store mood data with actual data
-            extractedMoodData.forEach(data => addMoodData(data));
+            setTimeout(() => {
+              // Replace all mood data with actual data
+              useHealthStore.setState({ moodData: extractedMoodData });
+            }, 300);
+          } else {
+            console.log('No mood data found in journal entries');
           }
           
           if (extractedActivityData.length > 0) {
-            // Replace store activity data with actual data
-            extractedActivityData.forEach(data => addActivityData(data));
+            setTimeout(() => {
+              // Replace all activity data with actual data
+              useHealthStore.setState({ activityData: extractedActivityData });
+            }, 400);
+          } else {
+            console.log('No activity data found in journal entries');
           }
         }
       } catch (error) {
         console.error('Error fetching real health data:', error);
-        setError('Error loading health data. Please try again later.');
+        setError('Error loading health data. Using sample data instead.');
       } finally {
         setDataLoading(false);
       }
@@ -180,21 +219,27 @@ const Stats = () => {
         
         setLoading(true);
         
+        // If we have a valid user ID from the database, use that instead of the profile ID
+        const idToUse = actualUserId || userProfile.id;
+        
         // Validate the user ID format for insights
-        if (!userProfile.id || !UUID_REGEX.test(userProfile.id)) {
-          console.error('Invalid UUID format for insights', userProfile.id);
+        if (!isValidUUID(idToUse)) {
+          console.error('Invalid UUID format for insights', idToUse);
           // Use fallback insights
           setInsights([
             "Based on your recent logs, maintaining consistent sleep patterns may help improve your energy levels.",
             "Your mood tends to be better on days with higher activity levels. Consider adding short walks to your routine.",
-            "Increasing water intake could help with the mental clarity issues you've mentioned in your journal."
+            "Increasing water intake could help with the mental clarity issues you've mentioned in your journal.",
+            "Creating a consistent bedtime routine may help improve your sleep quality over time.",
+            "Short mindfulness breaks during your day can help manage the stress patterns visible in your entries."
           ]);
           setLoading(false);
           return;
         }
         
-        // Use the user's ID from the profile
-        const userInsights = await getPersonalizedInsights(userProfile.id);
+        // Use the valid UUID for insights
+        console.log('Using valid UUID for insights:', idToUse);
+        const userInsights = await getPersonalizedInsights(idToUse);
         setInsights(userInsights);
       } catch (error) {
         console.error('Error fetching insights:', error);
@@ -202,7 +247,9 @@ const Stats = () => {
         setInsights([
           "Regular sleep schedules can improve overall health and energy levels.",
           "Aim to stay hydrated with at least 8 glasses of water daily.",
-          "Adding just 30 minutes of light exercise daily can significantly improve your mood and health."
+          "Adding just 30 minutes of light exercise daily can significantly improve your mood and health.",
+          "Consistent meal times can help regulate your energy levels throughout the day.",
+          "Brief stretching sessions can alleviate tension and improve your overall physical comfort."
         ]);
       } finally {
         setLoading(false);
@@ -212,27 +259,39 @@ const Stats = () => {
     if (!dataLoading) {
       loadInsights();
     }
-  }, [userProfile.id, dataLoading]);
+  }, [userProfile.id, dataLoading, actualUserId]);
 
+  // Modified to prioritize actual data
   const getAverageMetric = (data: any[], metricKey: string): number => {
     if (!data || data.length === 0) return 0;
     
-    const sum = data.reduce((acc, item) => acc + (item[metricKey] || 0), 0);
-    return Math.round((sum / data.length) * 10) / 10; // Round to 1 decimal place
+    // Filter out any potential null or undefined values
+    const validData = data.filter(item => item && item[metricKey] !== undefined && item[metricKey] !== null);
+    if (validData.length === 0) return 0;
+    
+    const sum = validData.reduce((acc, item) => acc + (Number(item[metricKey]) || 0), 0);
+    return Math.round((sum / validData.length) * 10) / 10; // Round to 1 decimal place
   };
 
-  const getWeeklyData = (data: any[]) => {
-    if (!data || data.length === 0) return [];
+  const getWeeklyData = (data: any[], metricKey: string) => {
+    if (!data) return [];
     
     const today = new Date();
+    // Create an array of the last 7 days
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = subDays(today, i);
       return format(date, 'yyyy-MM-dd');
     }).reverse();
     
+    // For each day, find matching data or return placeholder
     return last7Days.map(dateStr => {
-      const dataForDay = data.find(item => item.date === dateStr);
-      return { date: dateStr, value: dataForDay || 0 };
+      const matchingData = data.find(item => item.date === dateStr);
+      return {
+        date: dateStr,
+        value: matchingData ? matchingData[metricKey] : 0,
+        label: dateStr.split('-')[2], // Day of month
+        exists: !!matchingData
+      };
     });
   };
 
@@ -416,57 +475,94 @@ const Stats = () => {
                 </Text>
               </View>
             )}
-
-            <Text style={styles.sectionTitle}>AI Health Insights</Text>
-            {loading ? (
-              <ActivityIndicator size="large" color={colors.primary} />
-            ) : (
-              insights.slice(0, 3).map((insight, index) => (
-                <AiInsightBanner key={index} message={insight} />
-              ))
-            )}
           </>
         );
       
       case 'trends':
+        const today = new Date();
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = subDays(today, i);
+          return format(date, 'yyyy-MM-dd');
+        }).reverse();
+
         return (
           <>
             <Text style={styles.sectionTitle}>Mood Trends</Text>
-            <MoodChart 
-              data={moodData.slice(0, 14)} 
-              title="Mood Patterns" 
-              subtitle="Your mood over the past two weeks"
-            />
+            {moodData.length > 0 ? (
+              <MoodChart 
+                data={last7Days.map(dateStr => {
+                  const matchingData = moodData.find(item => item.date === dateStr);
+                  return matchingData || {
+                    date: dateStr,
+                    mood: 'neutral', // Default mood for missing data
+                    notes: ''
+                  };
+                })} 
+                title="Mood Patterns" 
+                subtitle="Your mood over the past week"
+              />
+            ) : (
+              <View style={styles.noDataCard}>
+                <Text style={styles.noDataText}>No mood data available. Log your mood in journal entries.</Text>
+              </View>
+            )}
             
             <Text style={styles.sectionTitle}>Sleep Quality</Text>
-            <ProgressChart 
-              data={sleepData.slice(0, 7).map(item => ({ 
-                date: item.date, 
-                value: item.quality / 10, 
-                label: `${item.quality}/10` 
-              }))} 
-              title="Sleep Quality" 
-              color={colors.info}
-            />
+            {sleepData.length > 0 ? (
+              <ProgressChart 
+                data={last7Days.map(dateStr => {
+                  const matchingData = sleepData.find(item => item.date === dateStr);
+                  return { 
+                    date: dateStr, 
+                    value: matchingData ? matchingData.quality / 10 : 0, 
+                    label: format(parseISO(dateStr), 'EEE'),
+                    exists: !!matchingData
+                  };
+                })} 
+                title="Sleep Quality" 
+                color={colors.info}
+              />
+            ) : (
+              <View style={styles.noDataCard}>
+                <Text style={styles.noDataText}>No sleep data available. Log your sleep quality in journal entries.</Text>
+              </View>
+            )}
             
             <Text style={styles.sectionTitle}>Hydration</Text>
-            <ProgressChart 
-              data={waterData.slice(0, 7).map(item => ({ 
-                date: item.date, 
-                value: item.glasses / item.target, 
-                label: `${item.glasses}/${item.target}` 
-              }))} 
-              title="Water Intake" 
-              color={colors.primary}
-            />
+            {waterData.length > 0 ? (
+              <ProgressChart 
+                data={last7Days.map(dateStr => {
+                  const matchingData = waterData.find(item => item.date === dateStr);
+                  return { 
+                    date: dateStr, 
+                    value: matchingData ? matchingData.glasses / matchingData.target : 0, 
+                    label: format(parseISO(dateStr), 'EEE'),
+                    exists: !!matchingData
+                  };
+                })} 
+                title="Water Intake" 
+                color={colors.primary}
+              />
+            ) : (
+              <View style={styles.noDataCard}>
+                <Text style={styles.noDataText}>No hydration data available. Log your water intake in journal entries.</Text>
+              </View>
+            )}
             
             <Text style={styles.sectionTitle}>Activity Level</Text>
-            <HealthTrends 
-              sleepData={sleepData.slice(0, 14)} 
-              waterData={waterData.slice(0, 14)} 
-              activityData={activityData.slice(0, 14)} 
-              moodData={moodData.slice(0, 14)}
-            />
+            {activityData.length > 0 || sleepData.length > 0 || waterData.length > 0 || moodData.length > 0 ? (
+              <HealthTrends 
+                sleepData={sleepData} 
+                waterData={waterData} 
+                activityData={activityData} 
+                moodData={moodData}
+                last7Days={last7Days}
+              />
+            ) : (
+              <View style={styles.noDataCard}>
+                <Text style={styles.noDataText}>No activity data available. Log your exercise in journal entries.</Text>
+              </View>
+            )}
           </>
         );
       
@@ -826,6 +922,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.regular,
     color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  noDataCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noDataText: {
+    color: colors.textSecondary,
+    fontSize: 14,
     textAlign: 'center',
   },
 });

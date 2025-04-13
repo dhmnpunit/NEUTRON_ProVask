@@ -14,9 +14,10 @@ const getMoodEmoji = (mood: string): string => {
     case 'great': return '😄';
     case 'good': return '🙂';
     case 'neutral': return '😐';
-    case 'bad': return '🙁';
-    case 'terrible': return '😫';
-    default: return '😐';
+    case 'bad': return '😕';
+    case 'terrible': return '😞';
+    case 'no-data': return '·';
+    default: return '·';
   }
 };
 
@@ -27,6 +28,7 @@ const getMoodColor = (mood: string): string => {
     case 'neutral': return colors.textTertiary;
     case 'bad': return colors.warning;
     case 'terrible': return colors.danger;
+    case 'no-data': return colors.divider;
     default: return colors.textTertiary;
   }
 };
@@ -36,8 +38,12 @@ export const MoodChart: React.FC<MoodChartProps> = ({
   title,
   subtitle
 }) => {
-  // Get last 7 days of data
-  const chartData = data.slice(0, 7).reverse();
+  // Process data to ensure we have data for all days
+  const chartData = data.map(item => ({
+    ...item,
+    // Mark if the mood is a real entry or a placeholder
+    hasData: item.mood !== 'no-data' && !!item.mood
+  }));
   
   // Format day labels
   const formatDay = (dateString: string): string => {
@@ -61,22 +67,31 @@ export const MoodChart: React.FC<MoodChartProps> = ({
         
         <View style={styles.barsContainer}>
           {chartData.map((item, index) => {
-            const moodValue = ['terrible', 'bad', 'neutral', 'good', 'great'].indexOf(item.mood) + 1;
-            const barHeight = (moodValue / 5) * 100;
+            const hasData = item.hasData !== false;
+            const moodValue = hasData 
+              ? ['terrible', 'bad', 'neutral', 'good', 'great'].indexOf(item.mood) + 1 
+              : 0;
+            const barHeight = hasData ? (moodValue / 5) * 100 : 0;
             
             return (
               <View key={index} style={styles.barColumn}>
-                <Text style={styles.emojiLabel}>{getMoodEmoji(item.mood)}</Text>
+                <Text style={[styles.emojiLabel, !hasData && styles.placeholderEmoji]}>
+                  {getMoodEmoji(item.mood || 'no-data')}
+                </Text>
                 <View style={styles.barWrapper}>
-                  <View 
-                    style={[
-                      styles.bar, 
-                      { 
-                        height: `${barHeight}%`,
-                        backgroundColor: getMoodColor(item.mood)
-                      }
-                    ]} 
-                  />
+                  {hasData ? (
+                    <View 
+                      style={[
+                        styles.bar, 
+                        { 
+                          height: `${barHeight}%`,
+                          backgroundColor: getMoodColor(item.mood)
+                        }
+                      ]} 
+                    />
+                  ) : (
+                    <View style={styles.noDataIndicator} />
+                  )}
                 </View>
                 <Text style={styles.dayLabel}>{formatDay(item.date)}</Text>
               </View>
@@ -158,5 +173,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 8,
+  },
+  placeholderEmoji: {
+    color: colors.divider,
+    opacity: 0.7,
+  },
+  noDataIndicator: {
+    width: 8,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: colors.divider,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.divider,
   },
 });

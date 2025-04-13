@@ -6,16 +6,18 @@ import {
   ScrollView, 
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { PencilIcon, ClockIcon, TagIcon, TrashIcon } from 'react-native-heroicons/outline';
+import { ChevronLeft } from 'lucide-react-native';
+import { ClockIcon, TagIcon, TrashIcon } from 'react-native-heroicons/outline';
 import { getJournalEntryById, deleteJournalEntry } from '@/services/journalService';
 import { JournalEntry, MoodType } from '@/types/health';
-import { typography, spacing, radius, shadows, iconSizes } from '@/constants/design';
+import { typography, spacing, radius, shadows, iconSizes, fonts } from '@/constants/design';
 
 export default function JournalEntryScreen() {
   const router = useRouter();
@@ -88,33 +90,47 @@ export default function JournalEntryScreen() {
     });
   };
   
-  const HeaderRight = () => (
-    <View style={styles.headerActions}>
-      <TouchableOpacity 
-        style={styles.headerButton}
-        onPress={() => router.push(`/logs/edit/${id}`)}
-      >
-        <PencilIcon size={iconSizes.medium} color={colors.text} />
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.headerButton}
-        onPress={handleDelete}
-      >
-        <TrashIcon size={iconSizes.medium} color={colors.danger} />
-      </TouchableOpacity>
-    </View>
-  );
+  const formatHeaderDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
   return (
     <ScreenWrapper>
-      <Stack.Screen
-        options={{
-          title: "journal entry",
-          headerRight: () => <HeaderRight />,
-          headerTitleStyle: styles.headerTitle,
-        }}
-      />
-
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <View style={styles.header}>
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+              hitSlop={{ top: 15, right: 15, bottom: 15, left: 15 }}
+            >
+              <ChevronLeft 
+                size={iconSizes.medium} 
+                color={colors.text} 
+              />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>
+              {entry ? formatHeaderDate(entry.created_at) : "Journal Entry"}
+            </Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.headerActionButton}
+            onPress={handleDelete}
+          >
+            <TrashIcon size={iconSizes.medium} color={colors.danger} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -216,17 +232,46 @@ export default function JournalEntryScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerTitle: {
-    fontSize: typography.h2.fontSize,
-    fontWeight: typography.h2.fontWeight,
-    color: typography.h2.color,
+  header: {
+    paddingTop: StatusBar.currentHeight || 30,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
-  headerActions: {
+  headerContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  headerButton: {
-    padding: spacing.sm,
-    marginLeft: spacing.sm,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: `${colors.border}40`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    fontFamily: fonts.headingSemiBold,
+  },
+  headerActionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: `${colors.danger}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingContainer: {
     flex: 1,

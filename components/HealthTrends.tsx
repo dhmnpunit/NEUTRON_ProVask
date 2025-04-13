@@ -23,6 +23,7 @@ interface HealthTrendsProps {
   waterData: WaterData[];
   moodData: MoodData[];
   activityData: ActivityData[];
+  last7Days?: string[];
   style?: StyleProp<ViewStyle>;
 }
 
@@ -49,6 +50,7 @@ export const HealthTrends: React.FC<HealthTrendsProps> = ({
   waterData = [],
   moodData = [],
   activityData = [],
+  last7Days,
   style
 }) => {
   const [insights, setInsights] = useState<HealthInsight[]>([]);
@@ -93,6 +95,15 @@ export const HealthTrends: React.FC<HealthTrendsProps> = ({
         addToDateMap(moodData, 'mood');
         addToDateMap(activityData, 'activity');
         
+        // If last7Days is provided, ensure all days exist in the map
+        if (last7Days && last7Days.length > 0) {
+          last7Days.forEach(dateStr => {
+            if (!dateMap.has(dateStr)) {
+              dateMap.set(dateStr, {});
+            }
+          });
+        }
+        
         // Exit if no data
         if (dateMap.size === 0) {
           setInsights([]);
@@ -100,12 +111,14 @@ export const HealthTrends: React.FC<HealthTrendsProps> = ({
           return;
         }
         
-        // 3. Filter out dates with no meaningful data
-        const validDates = Array.from(dateMap.entries()).filter(([_, data]) => {
-          // Check if the date has at least one type of health data
-          return Object.keys(data).length > 0;
-        });
-        
+        // 3. Filter out dates with no meaningful data (or use last7Days if provided)
+        const validDates = last7Days 
+          ? Array.from(dateMap.entries()).filter(([dateStr]) => last7Days.includes(dateStr))
+          : Array.from(dateMap.entries()).filter(([_, data]) => {
+              // Check if the date has at least one type of health data
+              return Object.keys(data).length > 0;
+            });
+            
         // Sort dates in reverse chronological order
         validDates.sort(([dateA], [dateB]) => {
           return new Date(dateB).getTime() - new Date(dateA).getTime();
@@ -201,7 +214,7 @@ export const HealthTrends: React.FC<HealthTrendsProps> = ({
     }
     
     generateInsights();
-  }, [sleepData, waterData, moodData, activityData]);
+  }, [sleepData, waterData, moodData, activityData, last7Days]);
   
   if (loading) {
     return (

@@ -199,8 +199,8 @@ export const getPersonalizedInsights = async (userId: string): Promise<string[]>
     // Process entries to extract health metrics
     const healthData = extractHealthDataFromJournalEntries(entries);
     
-    // Generate insights based on actual user data
-    const insights = await generateInsightsFromHealthData(healthData, userId);
+    // Generate insights based on actual user data and journal content
+    const insights = await generateInsightsFromHealthDataAndJournals(healthData, entries, userId);
     
     return insights;
   } catch (error) {
@@ -229,7 +229,7 @@ function extractHealthDataFromJournalEntries(entries: JournalEntry[]) {
     if (entry.health_metrics.sleep_quality) {
       sleepData.push({
         date,
-        hoursSlept: 8, // Placeholder
+        hoursSlept: entry.health_metrics.sleep_hours || 8, // Use actual hours if available
         quality: entry.health_metrics.sleep_quality,
         bedTime: '22:00', // Placeholder
         wakeTime: '06:00', // Placeholder
@@ -258,7 +258,7 @@ function extractHealthDataFromJournalEntries(entries: JournalEntry[]) {
     if (entry.health_metrics.exercise_minutes) {
       activityData.push({
         date,
-        steps: 6000, // Placeholder
+        steps: 0, // We don't track steps
         activeMinutes: entry.health_metrics.exercise_minutes,
         workouts: [],
       });
@@ -269,15 +269,16 @@ function extractHealthDataFromJournalEntries(entries: JournalEntry[]) {
 }
 
 /**
- * Generate insights from health data using Gemini API
+ * Generate insights from health data and journal content using Gemini API
  */
-async function generateInsightsFromHealthData(
+async function generateInsightsFromHealthDataAndJournals(
   healthData: { 
     sleepData: SleepData[]; 
     waterData: WaterData[]; 
     moodData: MoodData[]; 
     activityData: ActivityData[];
   },
+  journalEntries: JournalEntry[],
   userId: string
 ): Promise<string[]> {
   try {
@@ -287,18 +288,35 @@ async function generateInsightsFromHealthData(
       return getDefaultInsights();
     }
     
-    // Create prompt with user's health data
+    // Get the 5 most recent journal entries for content analysis
+    const recentJournals = journalEntries.slice(0, 5);
+    
+    // Create prompt with user's health data AND journal content
     const prompt = `
-      You are a health insights assistant. I will provide you with a user's health data.
-      Please analyze this data and provide 5 specific, personalized insights about their health patterns.
+      You are a health insights assistant specializing in preventive healthcare. You'll analyze a user's health journal entries and metrics to provide personalized preventive health insights.
       
-      Each insight should be a single sentence focused on a pattern or relationship between different metrics.
+      Your task is to analyze both the health metrics and the content of their journal entries to identify patterns, potential early warning signs, and opportunities for health improvement.
       
-      Here's the user's health data:
+      Focus on preventing potential health issues before they arise, and suggesting small habit changes that could improve overall wellbeing.
+      
+      Here's the user's journal entries:
+      ${recentJournals.map(entry => `
+      ---
+      Date: ${entry.created_at.split('T')[0]}
+      Mood: ${entry.mood || 'Not recorded'}
+      Sleep Quality: ${entry.health_metrics.sleep_quality || 'Not recorded'}/10
+      Water Glasses: ${entry.health_metrics.water_glasses || 'Not recorded'}
+      Exercise Minutes: ${entry.health_metrics.exercise_minutes || 'Not recorded'}
+      Energy Level: ${entry.health_metrics.energy_level || 'Not recorded'}/10
+      Journal Content: ${entry.content}
+      ---
+      `).join('\n')}
+      
+      Here's additional aggregated health data:
       
       Sleep Quality Data:
       ${healthData.sleepData.map(item => 
-        `Date: ${item.date}, Quality: ${item.quality}/10`
+        `Date: ${item.date}, Quality: ${item.quality}/10, Hours: ${item.hoursSlept}hr`
       ).join('\n')}
       
       Water Intake Data:
@@ -308,7 +326,7 @@ async function generateInsightsFromHealthData(
       
       Mood Data:
       ${healthData.moodData.map(item => 
-        `Date: ${item.date}, Mood: ${item.mood}, Notes: ${item.notes}`
+        `Date: ${item.date}, Mood: ${item.mood}`
       ).join('\n')}
       
       Activity Data:
@@ -316,10 +334,16 @@ async function generateInsightsFromHealthData(
         `Date: ${item.date}, Active Minutes: ${item.activeMinutes}`
       ).join('\n')}
       
-      Generate 5 concise, specific insights about patterns in this user's health data.
+      Based on this information, provide 5 personalized insights that:
+      1. Identify patterns between different health metrics (sleep, water, mood, activity)
+      2. Detect potential early warning signs of health issues
+      3. Analyze the journal content for mentioned symptoms or concerns
+      4. Suggest specific preventive actions based on the data
+      5. Focus on small, actionable habit changes that could improve wellbeing
+      
       Format your response as a JSON array of 5 insight strings.
-      Each insight should be a single sentence of 60-80 characters.
-      Do not include numbers or bullet points in your insights.
+      Each insight should be 1-2 sentences and around 100-150 characters.
+      Do not include numbers, bullet points, or labels in your insights.
     `;
     
     // Call Gemini API
@@ -331,9 +355,9 @@ async function generateInsightsFromHealthData(
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.2,
+          temperature: 0.3,
           maxOutputTokens: 1024,
-          topP: 0.8,
+          topP: 0.9,
           topK: 40
         }
       })
@@ -359,14 +383,33 @@ async function generateInsightsFromHealthData(
       if (jsonMatch) {
         const insights = JSON.parse(jsonMatch[0]);
         return insights.slice(0, 5); // Ensure we have exactly 5 insights
+      } else {
+        // Fallback if JSON parsing fails - extract text as insights
+        const textInsights = responseText
+          .split('\n')
+          .filter(line => line.trim().length > 20 && !line.includes('```'))
+          .slice(0, 5);
+          
+        if (textInsights.length > 0) {
+          return textInsights;
+        }
       }
     } catch (error) {
       console.error('Error parsing insights JSON:', error);
+      // Try to extract text insights if JSON parsing fails
+      const textInsights = responseText
+        .split('\n')
+        .filter(line => line.trim().length > 20 && !line.includes('```'))
+        .slice(0, 5);
+        
+      if (textInsights.length > 0) {
+        return textInsights;
+      }
     }
     
     return getDefaultInsights();
   } catch (error) {
-    console.error('Error generating insights from health data:', error);
+    console.error('Error generating insights from health data and journals:', error);
     return getDefaultInsights();
   }
 }
@@ -376,11 +419,11 @@ async function generateInsightsFromHealthData(
  */
 function getDefaultInsights(): string[] {
   return [
-    "Your sleep quality seems to decrease when you go to bed after 11pm.",
-    "You're more active on days when you log at least 6 glasses of water.",
-    "Your mood tends to be better on days with at least 30 minutes of activity.",
-    "Consider adding more protein to your morning meals for sustained energy.",
-    "Your stress levels appear lower on days when you practice mindfulness."
+    "Regular sleep schedules can help stabilize your mood and improve overall energy levels.",
+    "Staying hydrated throughout the day may help with the fatigue you've been experiencing.",
+    "Consider mindfulness exercises to help manage stress patterns visible in your logs.",
+    "Short walks after meals could improve your digestion and boost your reported energy levels.",
+    "Gradual increases in daily activity may help with the sleep quality issues in your entries."
   ];
 }
 
