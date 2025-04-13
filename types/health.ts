@@ -50,6 +50,7 @@ export interface HealthMetrics {
   energy_level: number;
   exercise_minutes: number;
   water_glasses: number;
+  sleep_hours?: number; // Optional to maintain backward compatibility
 }
 
 export interface JournalEntry {
@@ -99,4 +100,5 @@ export interface UserProfile {
   experience: number;
   healthCoins: number;
   joinedAt: string;
+  lastActivityDate?: string; // ISO string of the last date an activity was completed
 }

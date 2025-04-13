@@ -9,6 +9,8 @@ import { StatusBar } from "expo-status-bar";
 import * as SystemUI from 'expo-system-ui';
 import * as NavigationBar from 'expo-navigation-bar';
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { useHealthStore } from '@/store/health-store';
+import { useColorScheme } from 'react-native';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -61,18 +63,13 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const { checkStreak } = useHealthStore();
+
   const [loaded, error] = useFonts({
     ...FontAwesome.font,
-    // Geist Sans fonts
-    'GeistSans-Regular': require('../assets/fonts/Geist-Regular.otf'),
-    'GeistSans-Medium': require('../assets/fonts/Geist-Medium.otf'),
-    'GeistSans-SemiBold': require('../assets/fonts/Geist-SemiBold.otf'),
-    'GeistSans-Bold': require('../assets/fonts/Geist-Bold.otf'),
-    'GeistSans-Black': require('../assets/fonts/Geist-Black.otf'),
-    'GeistSans-Light': require('../assets/fonts/Geist-Light.otf'),
-    'Geist-Mono': require('../assets/fonts/GeistMono-Regular.otf'),
     
-    // Rethink Sans fonts for headings - ensure these are correctly loaded
+    // RethinkSans fonts
     'RethinkSans-Regular': require('../assets/fonts/RethinkSans-Regular.ttf'),
     'RethinkSans-Medium': require('../assets/fonts/RethinkSans-Medium.ttf'),
     'RethinkSans-SemiBold': require('../assets/fonts/RethinkSans-SemiBold.ttf'),
@@ -91,6 +88,11 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  // Check streak status on app startup
+  useEffect(() => {
+    checkStreak();
+  }, []);
 
   if (!loaded) {
     return null;

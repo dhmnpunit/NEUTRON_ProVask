@@ -3,20 +3,17 @@ import { colors } from './colors';
 
 // Font family constants
 export const fonts = {
-  // Rethink Sans for headings
+  // Rethink Sans for all text
+  regular: 'RethinkSans-Regular',
+  medium: 'RethinkSans-Medium',
+  semiBold: 'RethinkSans-SemiBold',
+  bold: 'RethinkSans-Bold',
+  
+  // Maintain heading aliases for backward compatibility
   headingRegular: 'RethinkSans-Regular',
   headingMedium: 'RethinkSans-Medium',
   headingSemiBold: 'RethinkSans-SemiBold',
   headingBold: 'RethinkSans-Bold',
-  
-  // Geist Sans for body text
-  regular: 'GeistSans-Regular',
-  medium: 'GeistSans-Medium',
-  semiBold: 'GeistSans-SemiBold',
-  bold: 'GeistSans-Bold',
-  black: 'GeistSans-Black',
-  light: 'GeistSans-Light',
-  mono: 'Geist-Mono',
 };
 
 // Typography
@@ -24,21 +21,21 @@ export const typography = StyleSheet.create({
   h1: {
     fontSize: 24,
     fontWeight: '700',
-    fontFamily: fonts.headingBold,
+    fontFamily: fonts.bold,
     color: colors.text,
     letterSpacing: -0.5,
   },
   h2: {
     fontSize: 20,
     fontWeight: '700',
-    fontFamily: fonts.headingBold,
+    fontFamily: fonts.bold,
     color: colors.text,
     letterSpacing: -0.4,
   },
   h3: {
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: fonts.headingSemiBold,
+    fontFamily: fonts.semiBold,
     color: colors.text,
     letterSpacing: -0.3,
   },

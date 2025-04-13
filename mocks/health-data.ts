@@ -227,5 +227,6 @@ import {
     level: 7,
     experience: 3500,
     healthCoins: 240,
-    joinedAt: '2023-01-15'
+    joinedAt: '2023-01-15',
+    lastActivityDate: new Date(Date.now() - 86400000).toISOString().split('T')[0] // yesterday's date
   };

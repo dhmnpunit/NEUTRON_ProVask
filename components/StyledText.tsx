@@ -26,33 +26,24 @@ export const StyledText: React.FC<StyledTextProps> = ({
 }) => {
   const baseStyle = typography[variant];
   
-  // Determine the correct font family based on the variant and weight
+  // Determine the correct font family based on the weight
   let fontFamilyStyle;
   if (fontFamily) {
     fontFamilyStyle = { fontFamily };
-  } else if (['h1', 'h2', 'h3'].includes(variant)) {
-    // For headings, use the Rethink Sans font
-    if (weight === 'bold' || variant === 'h1' || variant === 'h2') {
-      fontFamilyStyle = { fontFamily: fonts.headingBold };
-    } else if (weight === 'semiBold' || variant === 'h3') {
-      fontFamilyStyle = { fontFamily: fonts.headingSemiBold };
-    } else if (weight === 'medium') {
-      fontFamilyStyle = { fontFamily: fonts.headingMedium };
-    } else {
-      fontFamilyStyle = { fontFamily: fonts.headingRegular };
-    }
   } else {
-    // For non-headings, use the corresponding Geist Sans font
-    if (weight === 'bold') {
+    // Use RethinkSans for all text
+    if (weight === 'bold' || variant === 'h1' || variant === 'h2') {
       fontFamilyStyle = { fontFamily: fonts.bold };
-    } else if (weight === 'semiBold') {
+    } else if (weight === 'semiBold' || variant === 'h3') {
       fontFamilyStyle = { fontFamily: fonts.semiBold };
     } else if (weight === 'medium') {
       fontFamilyStyle = { fontFamily: fonts.medium };
     } else if (weight === 'light') {
-      fontFamilyStyle = { fontFamily: fonts.light };
+      // Map light to regular since RethinkSans doesn't have a light variant
+      fontFamilyStyle = { fontFamily: fonts.regular };
     } else if (weight === 'black') {
-      fontFamilyStyle = { fontFamily: fonts.black };
+      // Map black to bold since RethinkSans doesn't have a black variant
+      fontFamilyStyle = { fontFamily: fonts.bold };
     } else {
       fontFamilyStyle = { fontFamily: fonts.regular };
     }

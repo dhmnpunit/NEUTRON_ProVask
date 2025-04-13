@@ -31,17 +31,24 @@ interface GradientCardProps {
   style?: ViewStyle;
   startColor?: string;
   endColor?: string;
+  colorStart?: string;
+  colorEnd?: string;
 }
 
 export const GradientCard: React.FC<GradientCardProps> = ({
   children,
   style,
-  startColor = `${colors.primaryLight}30`,
-  endColor = colors.card,
+  startColor,
+  endColor,
+  colorStart,
+  colorEnd,
 }) => {
+  const start = startColor || colorStart || `${colors.primaryLight}30`;
+  const end = endColor || colorEnd || colors.card;
+  
   return (
     <LinearGradient
-      colors={[startColor, endColor]}
+      colors={[start, end]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.gradientCard, style]}

@@ -27,6 +27,12 @@ export default {
   experiments: {
     typedRoutes: true
   },
+  fonts: [
+    "./assets/fonts/RethinkSans-Regular.ttf",
+    "./assets/fonts/RethinkSans-Medium.ttf", 
+    "./assets/fonts/RethinkSans-SemiBold.ttf",
+    "./assets/fonts/RethinkSans-Bold.ttf"
+  ],
   extra: {
     // Access values from the .env file
     geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || null,

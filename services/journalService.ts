@@ -23,6 +23,7 @@ export interface CreateJournalEntryParams {
   health_metrics: HealthMetrics;
   tags?: string[];
   symptoms: string[];
+  created_at?: string;
 }
 
 export const addJournalEntry = async (params: CreateJournalEntryParams): Promise<JournalEntry> => {
@@ -35,7 +36,7 @@ export const addJournalEntry = async (params: CreateJournalEntryParams): Promise
       health_metrics: params.health_metrics,
       tags: params.tags || [],
       symptoms: params.symptoms,
-      created_at: new Date().toISOString(),
+      created_at: params.created_at || new Date().toISOString(),
     })
     .select()
     .single();

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Dimensions
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { fonts } from '@/constants/design';
@@ -14,12 +15,14 @@ import { useHealthStore } from '@/store/health-store';
 import { StreakCard } from '@/components/StreakCard';
 import { HealthTrends } from '@/components/HealthTrends';
 import { ActionButton } from '@/components/ActionButton';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { 
   PlusIcon, 
   Cog6ToothIcon,
   MoonIcon,
   ChevronRightIcon,
-  CheckIcon
+  CheckIcon,
+  SparklesIcon
 } from 'react-native-heroicons/outline';
 import { CheckCircleIcon } from 'react-native-heroicons/solid';
 import { useRouter } from 'expo-router';
@@ -31,6 +34,8 @@ import { format, parseISO } from 'date-fns';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+const { width } = Dimensions.get('window');
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -39,6 +44,7 @@ export default function DashboardScreen() {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+  const [showStreakDetails, setShowStreakDetails] = useState(false);
   
   // Derived state from journal entries
   const [sleepData, setSleepData] = useState<SleepData[]>([]);
@@ -165,9 +171,12 @@ export default function DashboardScreen() {
   
   return (
     <ScreenWrapper>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.push('/profile')}>
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={() => router.push('/profile')}
+          >
             <Image 
               source={{ 
                 uri: user?.user_metadata?.avatar_url || 
@@ -175,12 +184,16 @@ export default function DashboardScreen() {
               }}
               style={styles.avatar}
             />
+            <Text style={styles.headerTitle}>{user?.user_metadata?.name || 'your health'}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{user?.user_metadata?.name || 'your health'}</Text>
+          
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => router.push('/profile')}
+          >
+            <Cog6ToothIcon size={22} color={colors.text} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => router.push('/profile')}>
-          <Cog6ToothIcon size={24} color={colors.text} />
-        </TouchableOpacity>
       </View>
       
       <ScrollView 
@@ -188,21 +201,35 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.mainSection}>
+        <View style={styles.streakCardWrapper}>
           <StreakCard 
             streak={userProfile.streak} 
             description="days with good health habits"
+            lastActivityDate={userProfile.lastActivityDate || new Date().toISOString()}
+            onPress={() => setShowStreakDetails(!showStreakDetails)}
+            showDetails={showStreakDetails}
           />
-          
-          <View style={styles.logButtonContainer}>
-            <ActionButton
-              title="Log Today's Health"
-              icon={<PlusIcon size={18} color="#FFFFFF" />}
-              onPress={() => router.push('/logs/add')}
-              primary
-              fullWidth
-            />
+        </View>
+        
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{userProfile.healthCoins}</Text>
+            <Text style={styles.statLabel}>Health Coins</Text>
           </View>
+          
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{activeTasks.length}</Text>
+            <Text style={styles.statLabel}>Active Tasks</Text>
+          </View>
+        </View>
+        
+        <View style={styles.actionsContainer}>
+          <PrimaryButton
+            title="Log Today's Health"
+            icon={<PlusIcon size={18} color="#FFFFFF" />}
+            onPress={() => router.push('/logs/add')}
+            fullWidth
+          />
         </View>
         
         {loading ? (
@@ -212,7 +239,9 @@ export default function DashboardScreen() {
           </View>
         ) : (
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Health Trends</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Health Trends</Text>
+            </View>
             <HealthTrends 
               sleepData={sleepData}
               waterData={waterData}
@@ -224,7 +253,15 @@ export default function DashboardScreen() {
         
         {activeTasks.length > 0 && (
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Today's Tasks</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Today's Tasks</Text>
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={() => router.push('/(tabs)/flip-dice')}
+              >
+                <Text style={styles.viewAllText}>Get More</Text>
+              </TouchableOpacity>
+            </View>
             
             <GestureHandlerRootView>
               {activeTasks.map(task => (
@@ -263,35 +300,39 @@ export default function DashboardScreen() {
         )}
         
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Recommended For You</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recommended For You</Text>
+          </View>
           
-          <TouchableOpacity 
-            style={styles.recommendationItem}
-            onPress={() => router.push('/(tabs)/chat')}
-          >
-            <View style={styles.recommendationContent}>
-              <MoonIcon size={20} color={colors.sleep} style={styles.recommendationIcon} />
-              <View>
-                <Text style={styles.recommendationText}>Get personalized health advice</Text>
-                <Text style={styles.recommendationSubtext}>Chat with your health assistant</Text>
+          <View style={styles.recommendationsContainer}>
+            <TouchableOpacity 
+              style={styles.recommendationItem}
+              onPress={() => router.push('/(tabs)/chat')}
+            >
+              <View style={styles.recommendationIconContainer}>
+                <MoonIcon size={20} color={colors.primary} />
               </View>
-            </View>
-            <ChevronRightIcon size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.recommendationItem}
-            onPress={() => router.push('/(tabs)/flip-dice')}  
-          >
-            <View style={styles.recommendationContent}>
-              <MoonIcon size={20} color={colors.sleep} style={styles.recommendationIcon} />
-              <View>
-                <Text style={styles.recommendationText}>Try a new health challenge</Text>
-                <Text style={styles.recommendationSubtext}>Flip the dice for random activities</Text>
+              <View style={styles.recommendationContent}>
+                <Text style={styles.recommendationTitle}>Get personalized health advice</Text>
+                <Text style={styles.recommendationDescription}>Chat with your health assistant</Text>
               </View>
-            </View>
-            <ChevronRightIcon size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
+              <ChevronRightIcon size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.recommendationItem}
+              onPress={() => router.push('/(tabs)/flip-dice')}  
+            >
+              <View style={styles.recommendationIconContainer}>
+                <SparklesIcon size={20} color={colors.primary} />
+              </View>
+              <View style={styles.recommendationContent}>
+                <Text style={styles.recommendationTitle}>Try a new health challenge</Text>
+                <Text style={styles.recommendationDescription}>Flip the dice for random activities</Text>
+              </View>
+              <ChevronRightIcon size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </ScreenWrapper>
@@ -299,105 +340,131 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    backgroundColor: colors.background,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  },
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 12,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontFamily: fonts.headingSemiBold,
     color: colors.text,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,
-    padding: 16,
-  },
-  logButtonContainer: {
-    marginBottom: 16,
   },
   scrollContent: {
+    padding: 16,
     paddingBottom: 32,
   },
-  mainSection: {
+  streakCardWrapper: {
+    marginBottom: 16,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    marginBottom: 24,
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  statValue: {
+    fontSize: 24,
+    fontFamily: fonts.headingBold,
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
+  },
+  actionsContainer: {
     marginBottom: 24,
   },
   sectionContainer: {
-    marginBottom: 28,
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontFamily: fonts.headingSemiBold,
     fontSize: 18,
-    color: colors.text,
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  recommendationsContainer: {
-    marginBottom: 24,
-  },
-  recommendationHeader: {
-    marginBottom: 16,
-  },
-  recommendationTitle: {
     fontFamily: fonts.headingSemiBold,
-    fontSize: 18,
     color: colors.text,
   },
-  recommendationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+  viewAllButton: {
+    padding: 4,
   },
-  recommendationContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  recommendationIcon: {
-    marginRight: 12,
-  },
-  recommendationText: {
+  viewAllText: {
+    color: colors.primary,
+    fontFamily: fonts.medium,
     fontSize: 14,
-    color: colors.text,
-    marginBottom: 2,
   },
-  recommendationSubtext: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  todayTasksContainer: {
+  loadingContainer: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
   },
   taskItem: {
     backgroundColor: colors.card,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-    marginHorizontal: 2,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 1,
     shadowColor: colors.shadow,
     shadowOpacity: 0.1,
     shadowRadius: 2,
     shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   taskCheckCircle: {
     marginRight: 12,
@@ -430,34 +497,24 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   taskReward: {
-    backgroundColor: colors.primary + '15', // 15% opacity
+    backgroundColor: colors.primary + '15',
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 12,
-    alignSelf: 'flex-start',
   },
   taskRewardText: {
     fontFamily: fonts.headingSemiBold,
     fontSize: 12,
     color: colors.primary,
   },
-  loadingContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontFamily: fonts.regular,
-    marginTop: 12,
-    color: colors.textSecondary,
-  },
   swipeActionContainer: {
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     width: 100,
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
-    marginBottom: 10,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    marginBottom: 8,
     flexDirection: 'column',
   },
   swipeActionText: {
@@ -465,6 +522,41 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 12,
     marginTop: 4,
+  },
+  recommendationsContainer: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  recommendationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  recommendationIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  recommendationContent: {
+    flex: 1,
+  },
+  recommendationTitle: {
+    fontFamily: fonts.headingSemiBold,
+    fontSize: 14,
+    color: colors.text,
+    marginBottom: 2,
+  },
+  recommendationDescription: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: colors.textSecondary,
   },
 });
 
