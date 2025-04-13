@@ -30,6 +30,8 @@ type Message = {
   content: string;
   sender: 'user' | 'assistant';
   timestamp: Date;
+  user_id?: string;
+  created_at?: string;
 };
 
 const initialMessages: Message[] = [
@@ -95,65 +97,75 @@ export default function ChatScreen() {
   const loadChatHistory = async () => {
     if (!user) return;
     
-    setIsLoadingHistory(true);
     try {
-      const history = await getChatHistory(user.id);
+      setIsLoading(true);
+      const chatHistory = await getChatHistory(user.id);
       
-      if (history.length > 0) {
-        // Convert Supabase messages to our Message format
-        const formattedMessages = history.map(msg => ({
-          id: msg.id,
-          content: msg.content,
-          sender: msg.sender as 'user' | 'assistant',
-          timestamp: new Date(msg.created_at),
-        }));
-        
-        setMessages(formattedMessages);
-      }
+      // Convert ChatMessage objects to local Message format
+      const formattedMessages: Message[] = chatHistory.map((msg) => ({
+        id: msg.id,
+        content: msg.content,
+        sender: msg.sender as 'user' | 'assistant',
+        timestamp: new Date(msg.created_at),
+        user_id: msg.user_id,
+        created_at: msg.created_at
+      }));
+      
+      setMessages(formattedMessages);
     } catch (error) {
-      console.error('Failed to load chat history:', error);
+      console.error('Error loading chat history:', error);
     } finally {
-      setIsLoadingHistory(false);
+      setIsLoading(false);
     }
   };
 
   const handleSend = async () => {
     if (inputText.trim() === '' || !user) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
+    const userMessageId = Date.now().toString();
+    
+    // Create new user message
+    const newUserMessage: Message = {
+      id: userMessageId,
       content: inputText,
       sender: 'user',
       timestamp: new Date(),
+      user_id: user.id,
+      created_at: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // Save the user message to the database
+    await saveChatMessage(user.id, inputText, 'user');
+
+    // Update local state immediately with the new message
+    setMessages((prev) => [...prev, newUserMessage]);
     setInputText('');
     setIsLoading(true);
 
     try {
-      // Save user message to Supabase
-      await saveChatMessage(user.id, userMessage.content, 'user');
-      
-      // Generate AI response - now this is async
-      const response = await getHealthAssistantResponse(inputText);
-      const aiResponse: Message = {
+      // Get response from health assistant
+      const assistantResponse = await getHealthAssistantResponse(inputText, user.id);
+
+      // Save the assistant's response to the database
+      await saveChatMessage(user.id, assistantResponse, 'assistant');
+
+      // Update local state with the assistant's response
+      const newAssistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: response,
+        content: assistantResponse,
         sender: 'assistant',
         timestamp: new Date(),
+        user_id: user.id,
+        created_at: new Date().toISOString(),
       };
+
+      setMessages((prev) => [...prev, newAssistantMessage]);
       
-      // Save AI response to Supabase
-      await saveChatMessage(user.id, aiResponse.content, 'assistant');
-      
-      setMessages(prev => [...prev, aiResponse]);
-      
-      // Refresh personalized insights after interaction
+      // Refresh personalized insights after new messages
       loadPersonalizedInsights();
     } catch (error) {
-      console.error('Error in handleSend:', error);
-      Alert.alert('Error', 'Failed to send message');
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
     } finally {
       setIsLoading(false);
     }

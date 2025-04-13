@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import { getJournalEntries } from './journalService';
 import { parseISO, format, subDays } from 'date-fns';
 import { JournalEntry, SleepData, WaterData, MoodData, ActivityData } from '@/types/health';
+import { getChatHistory, ChatMessage } from './chatService';
 
 // Endpoint for Gemini API - using Gemini 1.5 Flash which is widely available
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
@@ -26,9 +27,10 @@ const getGeminiApiKey = () => {
 /**
  * Get a response from Gemini for health-related questions
  * @param userInput - The text input from the user
+ * @param userId - The user's ID to retrieve conversation history
  * @returns A relevant health response from the AI
  */
-export const getAIHealthAssistantResponse = async (userInput: string): Promise<string> => {
+export const getAIHealthAssistantResponse = async (userInput: string, userId: string): Promise<string> => {
   try {
     const apiKey = getGeminiApiKey();
     
@@ -37,15 +39,32 @@ export const getAIHealthAssistantResponse = async (userInput: string): Promise<s
       return getOfflineHealthAssistantResponse(userInput);
     }
     
-    const systemPrompt = `You are a health assistant for a wellness tracking app called ProVask. 
+    // Get recent conversation history (last 10 messages)
+    const recentMessages = await getChatHistory(userId, 10);
+    
+    // Format conversation history for the prompt
+    let conversationHistory = '';
+    if (recentMessages && recentMessages.length > 0) {
+      conversationHistory = 'Recent conversation history:\n';
+      recentMessages.forEach(msg => {
+        const role = msg.sender === 'user' ? 'User' : 'Isha';
+        conversationHistory += `${role}: ${msg.content}\n`;
+      });
+      conversationHistory += '\n';
+    }
+    
+    const systemPrompt = `You are Isha, a health assistant for a wellness tracking app called ProVask. 
     Your goal is to provide helpful, accurate, and personalized health information. 
     Keep your responses focused on general wellness, nutrition, exercise, sleep, hydration, and mental wellness.
     Be supportive and encouraging. Do not provide specific medical diagnoses or treatment recommendations.
-    Keep responses concise (under 100 words) and conversational. Use simple language.`;
+    Keep responses concise (under 100 words) and conversational. Use simple language.
+    
+    IMPORTANT: Remember details about the user from previous messages in the conversation.
+    Reference previous topics when appropriate to provide a continuous and coherent conversation experience.`;
 
     console.log('Making Gemini API request to:', GEMINI_API_ENDPOINT);
     
-    // Updated Gemini API request format
+    // Updated Gemini API request format with conversation history
     const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -55,7 +74,7 @@ export const getAIHealthAssistantResponse = async (userInput: string): Promise<s
         contents: [
           {
             parts: [
-              { text: `${systemPrompt}\n\nUser question: ${userInput}` }
+              { text: `${systemPrompt}\n\n${conversationHistory}User's current question: ${userInput}` }
             ]
           }
         ],
@@ -146,16 +165,16 @@ export const getOfflineHealthAssistantResponse = (userInput: string): string => 
   }
   
   // Default response
-  return "I'm your health assistant, here to help with your wellness journey. You can ask me about sleep, exercise, water intake, nutrition, or stress management. What health topic would you like to discuss today?";
+  return "I'm Isha, your health assistant, here to help with your wellness journey. You can ask me about sleep, exercise, water intake, nutrition, or stress management. What health topic would you like to discuss today?";
 };
 
 /**
  * Main function to get health assistant responses, using AI when possible or offline responses as fallback
  */
-export const getHealthAssistantResponse = async (userInput: string): Promise<string> => {
+export const getHealthAssistantResponse = async (userInput: string, userId: string): Promise<string> => {
   try {
     // Use Gemini API
-    return await getAIHealthAssistantResponse(userInput);
+    return await getAIHealthAssistantResponse(userInput, userId);
   } catch (error) {
     console.error('Error in getHealthAssistantResponse:', error);
     return getOfflineHealthAssistantResponse(userInput);
