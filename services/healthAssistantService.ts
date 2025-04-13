@@ -1,6 +1,9 @@
 // A service for handling health assistant responses and message management
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { getJournalEntries } from './journalService';
+import { parseISO, format, subDays } from 'date-fns';
+import { JournalEntry, SleepData, WaterData, MoodData, ActivityData } from '@/types/health';
 
 // Endpoint for Gemini API - using Gemini 1.5 Flash which is widely available
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
@@ -164,17 +167,203 @@ export const getHealthAssistantResponse = async (userInput: string): Promise<str
  * @param userId - The user's ID to fetch their health data
  * @returns An array of personalized health insights
  */
-export const getPersonalizedInsights = (userId: string): string[] => {
-  // In a real application, this would fetch data from the user's health records
-  // For now, we'll return static suggestions
+export const getPersonalizedInsights = async (userId: string): Promise<string[]> => {
+  try {
+    // Fetch user journal entries from Supabase
+    const entries = await getJournalEntries(userId);
+    
+    // If no entries, return default insights
+    if (!entries || entries.length === 0) {
+      return getDefaultInsights();
+    }
+    
+    // Process entries to extract health metrics
+    const healthData = extractHealthDataFromJournalEntries(entries);
+    
+    // Generate insights based on actual user data
+    const insights = await generateInsightsFromHealthData(healthData, userId);
+    
+    return insights;
+  } catch (error) {
+    console.error('Error fetching personalized insights:', error);
+    return getDefaultInsights();
+  }
+};
+
+/**
+ * Extract health data from journal entries
+ */
+function extractHealthDataFromJournalEntries(entries: JournalEntry[]) {
+  // Get the 10 most recent entries
+  const recentEntries = entries.slice(0, 10);
+  
+  // Extract health metrics from entries
+  const sleepData: SleepData[] = [];
+  const waterData: WaterData[] = [];
+  const moodData: MoodData[] = [];
+  const activityData: ActivityData[] = [];
+
+  recentEntries.forEach(entry => {
+    const date = entry.created_at.split('T')[0];
+    
+    // Extract sleep data if available
+    if (entry.health_metrics.sleep_quality) {
+      sleepData.push({
+        date,
+        hoursSlept: 8, // Placeholder
+        quality: entry.health_metrics.sleep_quality,
+        bedTime: '22:00', // Placeholder
+        wakeTime: '06:00', // Placeholder
+      });
+    }
+    
+    // Extract water data if available
+    if (entry.health_metrics.water_glasses) {
+      waterData.push({
+        date,
+        glasses: entry.health_metrics.water_glasses,
+        target: 8, // Default target
+      });
+    }
+    
+    // Extract mood data if available
+    if (entry.mood) {
+      moodData.push({
+        date,
+        mood: entry.mood,
+        notes: entry.content,
+      });
+    }
+    
+    // Extract activity data if available
+    if (entry.health_metrics.exercise_minutes) {
+      activityData.push({
+        date,
+        steps: 6000, // Placeholder
+        activeMinutes: entry.health_metrics.exercise_minutes,
+        workouts: [],
+      });
+    }
+  });
+
+  return { sleepData, waterData, moodData, activityData };
+}
+
+/**
+ * Generate insights from health data using Gemini API
+ */
+async function generateInsightsFromHealthData(
+  healthData: { 
+    sleepData: SleepData[]; 
+    waterData: WaterData[]; 
+    moodData: MoodData[]; 
+    activityData: ActivityData[];
+  },
+  userId: string
+): Promise<string[]> {
+  try {
+    const apiKey = getGeminiApiKey();
+    
+    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+      return getDefaultInsights();
+    }
+    
+    // Create prompt with user's health data
+    const prompt = `
+      You are a health insights assistant. I will provide you with a user's health data.
+      Please analyze this data and provide 5 specific, personalized insights about their health patterns.
+      
+      Each insight should be a single sentence focused on a pattern or relationship between different metrics.
+      
+      Here's the user's health data:
+      
+      Sleep Quality Data:
+      ${healthData.sleepData.map(item => 
+        `Date: ${item.date}, Quality: ${item.quality}/10`
+      ).join('\n')}
+      
+      Water Intake Data:
+      ${healthData.waterData.map(item => 
+        `Date: ${item.date}, Glasses: ${item.glasses}, Target: ${item.target}`
+      ).join('\n')}
+      
+      Mood Data:
+      ${healthData.moodData.map(item => 
+        `Date: ${item.date}, Mood: ${item.mood}, Notes: ${item.notes}`
+      ).join('\n')}
+      
+      Activity Data:
+      ${healthData.activityData.map(item => 
+        `Date: ${item.date}, Active Minutes: ${item.activeMinutes}`
+      ).join('\n')}
+      
+      Generate 5 concise, specific insights about patterns in this user's health data.
+      Format your response as a JSON array of 5 insight strings.
+      Each insight should be a single sentence of 60-80 characters.
+      Do not include numbers or bullet points in your insights.
+    `;
+    
+    // Call Gemini API
+    const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+          topP: 0.8,
+          topK: 40
+        }
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Gemini API error for insights:', data);
+      return getDefaultInsights();
+    }
+    
+    // Extract response text from Gemini API response
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    if (!responseText) {
+      return getDefaultInsights();
+    }
+    
+    // Try to parse JSON array from the response
+    try {
+      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const insights = JSON.parse(jsonMatch[0]);
+        return insights.slice(0, 5); // Ensure we have exactly 5 insights
+      }
+    } catch (error) {
+      console.error('Error parsing insights JSON:', error);
+    }
+    
+    return getDefaultInsights();
+  } catch (error) {
+    console.error('Error generating insights from health data:', error);
+    return getDefaultInsights();
+  }
+}
+
+/**
+ * Default insights for when there's no data or API errors
+ */
+function getDefaultInsights(): string[] {
   return [
     "Your sleep quality seems to decrease when you go to bed after 11pm.",
     "You're more active on days when you log at least 6 glasses of water.",
-    "Your mood tends to be better on days with at least 30 minutes of physical activity.",
+    "Your mood tends to be better on days with at least 30 minutes of activity.",
     "Consider adding more protein to your morning meals for sustained energy.",
     "Your stress levels appear lower on days when you practice mindfulness."
   ];
-};
+}
 
 /**
  * Get health recommendations based on recent user health metrics

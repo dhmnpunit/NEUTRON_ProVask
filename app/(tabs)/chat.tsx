@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Image,
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { typography, spacing, radius, shadows } from '@/constants/design';
@@ -20,6 +21,9 @@ import { getHealthAssistantResponse, getPersonalizedInsights } from '@/services/
 import { useAuth } from '@/context/AuthContext';
 import { saveChatMessage, getChatHistory, clearChatHistory, ChatMessage } from '@/services/chatService';
 import Constants from 'expo-constants';
+
+// Import Isha profile picture
+const IshaProfileImage = require('@/assets/isha.png');
 
 type Message = {
   id: string;
@@ -31,7 +35,7 @@ type Message = {
 const initialMessages: Message[] = [
   {
     id: '1',
-    content: "Hello! I'm your health assistant. How can I help you today?",
+    content: "Hello! I'm Isha, your health assistant. How can I help you today?",
     sender: 'assistant',
     timestamp: new Date(),
   },
@@ -52,6 +56,7 @@ export default function ChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [insights, setInsights] = useState<string[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(true);
   const flatListRef = useRef<FlatList>(null);
   const { user } = useAuth();
   const [showApiKeyNotice, setShowApiKeyNotice] = useState(false);
@@ -60,11 +65,24 @@ export default function ChatScreen() {
   useEffect(() => {
     if (user) {
       loadChatHistory();
-      
-      const userInsights = getPersonalizedInsights(user.id);
-      setInsights(userInsights);
+      loadPersonalizedInsights();
     }
   }, [user]);
+  
+  // Load personalized insights based on user data
+  const loadPersonalizedInsights = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoadingInsights(true);
+      const userInsights = await getPersonalizedInsights(user.id);
+      setInsights(userInsights);
+    } catch (error) {
+      console.error('Failed to load personalized insights:', error);
+    } finally {
+      setIsLoadingInsights(false);
+    }
+  };
 
   // Check if API key is configured
   useEffect(() => {
@@ -130,6 +148,9 @@ export default function ChatScreen() {
       await saveChatMessage(user.id, aiResponse.content, 'assistant');
       
       setMessages(prev => [...prev, aiResponse]);
+      
+      // Refresh personalized insights after interaction
+      loadPersonalizedInsights();
     } catch (error) {
       console.error('Error in handleSend:', error);
       Alert.alert('Error', 'Failed to send message');
@@ -186,7 +207,10 @@ export default function ChatScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Health Assistant</Text>
+          <View style={styles.headerLeft}>
+            <Image source={IshaProfileImage} style={styles.assistantAvatar} />
+            <Text style={styles.headerTitle}>Isha</Text>
+          </View>
           {messages.length > 1 && (
             <TouchableOpacity onPress={handleClearHistory} style={styles.clearButton}>
               <TrashIcon size={20} color={colors.textSecondary} />
@@ -251,11 +275,18 @@ export default function ChatScreen() {
             messages.length > 2 && insights.length > 0 ? (
               <View style={styles.insightsContainer}>
                 <Text style={styles.insightsTitle}>Personalized Insights</Text>
-                {insights.map((insight, index) => (
-                  <View key={index} style={styles.insightItem}>
-                    <Text style={styles.insightText}>{insight}</Text>
+                {isLoadingInsights ? (
+                  <View style={styles.insightsLoading}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={styles.insightsLoadingText}>Loading insights...</Text>
                   </View>
-                ))}
+                ) : (
+                  insights.map((insight, index) => (
+                    <View key={index} style={styles.insightItem}>
+                      <Text style={styles.insightText}>{insight}</Text>
+                    </View>
+                  ))
+                )}
               </View>
             ) : null
           }
@@ -271,22 +302,22 @@ export default function ChatScreen() {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Ask about your health..."
-            placeholderTextColor={colors.textTertiary}
             value={inputText}
             onChangeText={setInputText}
+            placeholder="Ask Isha a question..."
+            placeholderTextColor={colors.textSecondary}
             multiline
-            maxLength={500}
+            maxLength={200}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
               styles.sendButton,
-              !inputText.trim() && styles.sendButtonDisabled
-            ]} 
+              inputText.trim() === '' ? styles.sendButtonDisabled : null
+            ]}
             onPress={handleSend}
-            disabled={!inputText.trim()}
+            disabled={inputText.trim() === '' || isLoading}
           >
-            <ArrowUpIcon size={20} color={!inputText.trim() ? colors.textTertiary : colors.background} />
+            <ArrowUpIcon size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -306,6 +337,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  assistantAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: spacing.sm,
   },
   headerTitle: {
     ...typography.h3,
@@ -481,5 +522,16 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.background,
     fontWeight: '500',
+  },
+  insightsLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  insightsLoadingText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginLeft: spacing.xs,
   },
 }); 

@@ -120,76 +120,92 @@ export default function JournalEntryScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : entry ? (
-        <ScrollView style={styles.container}>
-          <View style={styles.dateContainer}>
-            <ClockIcon size={iconSizes.small} color={colors.textSecondary} style={styles.dateIcon} />
-            <Text style={styles.date}>{formatDate(entry.created_at)}</Text>
-          </View>
-
-          {entry.mood && (
-            <View style={styles.moodContainer}>
-              <Text style={styles.moodEmoji}>{getMoodEmoji(entry.mood)}</Text>
-              <Text style={styles.moodText}>Feeling {entry.mood}</Text>
+        <>
+          <ScrollView style={styles.container}>
+            <View style={styles.dateContainer}>
+              <ClockIcon size={iconSizes.small} color={colors.textSecondary} style={styles.dateIcon} />
+              <Text style={styles.date}>{formatDate(entry.created_at)}</Text>
             </View>
-          )}
 
-          <View style={styles.contentContainer}>
-            <Text style={styles.content}>{entry.content}</Text>
-          </View>
+            {entry.mood && (
+              <View style={styles.moodContainer}>
+                <Text style={styles.moodEmoji}>{getMoodEmoji(entry.mood)}</Text>
+                <Text style={styles.moodText}>Feeling {entry.mood}</Text>
+              </View>
+            )}
 
-          {entry.tags.length > 0 && (
+            <View style={styles.contentContainer}>
+              <Text style={styles.content}>{entry.content}</Text>
+            </View>
+
+            {entry.tags.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Tags</Text>
+                <View style={styles.tagsContainer}>
+                  {entry.tags.map((tag, index) => (
+                    <View key={index} style={styles.tag}>
+                      <TagIcon size={iconSizes.small} color={colors.primary} style={styles.tagIcon} />
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {entry.symptoms.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Symptoms</Text>
+                <View style={styles.tagsContainer}>
+                  {entry.symptoms.map((symptom, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText}>{symptom}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tags</Text>
-              <View style={styles.tagsContainer}>
-                {entry.tags.map((tag, index) => (
-                  <View key={index} style={styles.tag}>
-                    <TagIcon size={iconSizes.small} color={colors.primary} style={styles.tagIcon} />
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
+              <Text style={styles.sectionTitle}>Health Metrics</Text>
+              <View style={styles.metricsContainer}>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Sleep Quality</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.sleep_quality}/10</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Mental Clarity</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.mental_clarity}/10</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Energy Level</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.energy_level}/10</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Exercise</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.exercise_minutes} min</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricLabel}>Water</Text>
+                  <Text style={styles.metricValue}>{entry.health_metrics.water_glasses} glasses</Text>
+                </View>
               </View>
             </View>
-          )}
-
-          {entry.symptoms.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Symptoms</Text>
-              <View style={styles.tagsContainer}>
-                {entry.symptoms.map((symptom, index) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>{symptom}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Health Metrics</Text>
-            <View style={styles.metricsContainer}>
-              <View style={styles.metric}>
-                <Text style={styles.metricLabel}>Sleep Quality</Text>
-                <Text style={styles.metricValue}>{entry.health_metrics.sleep_quality}/10</Text>
-              </View>
-              <View style={styles.metric}>
-                <Text style={styles.metricLabel}>Mental Clarity</Text>
-                <Text style={styles.metricValue}>{entry.health_metrics.mental_clarity}/10</Text>
-              </View>
-              <View style={styles.metric}>
-                <Text style={styles.metricLabel}>Energy Level</Text>
-                <Text style={styles.metricValue}>{entry.health_metrics.energy_level}/10</Text>
-              </View>
-              <View style={styles.metric}>
-                <Text style={styles.metricLabel}>Exercise</Text>
-                <Text style={styles.metricValue}>{entry.health_metrics.exercise_minutes} min</Text>
-              </View>
-              <View style={styles.metric}>
-                <Text style={styles.metricLabel}>Water</Text>
-                <Text style={styles.metricValue}>{entry.health_metrics.water_glasses} glasses</Text>
-              </View>
-            </View>
+            
+            {/* Add space at the bottom for fixed button */}
+            <View style={styles.bottomSpace} />
+          </ScrollView>
+          
+          {/* Fixed delete button at the bottom */}
+          <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
+              <TrashIcon size={iconSizes.medium} color="#FFFFFF" style={styles.deleteIcon} />
+              <Text style={styles.deleteButtonText}>Delete Journal Entry</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+        </>
       ) : (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Entry not found</Text>
@@ -320,5 +336,39 @@ const styles = StyleSheet.create({
     fontSize: typography.body.fontSize,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  bottomSpace: {
+    height: 80, // Space for the fixed button
+  },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  deleteButton: {
+    backgroundColor: colors.danger,
+    borderRadius: radius.medium,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+  },
+  deleteIcon: {
+    marginRight: spacing.sm,
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: typography.body.fontSize,
+    fontWeight: '600',
   },
 });

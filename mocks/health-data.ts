@@ -17,64 +17,34 @@ import {
     return date.toISOString().split('T')[0];
   };
   
-  // Sleep data for the last 7 days
+  // Sleep data for only 3 days (today, 2 days ago, and 4 days ago)
   export const sleepData: SleepData[] = [
-    { date: getDateString(6), hoursSlept: 7.5, quality: 8, bedTime: '23:30', wakeTime: '07:00' },
-    { date: getDateString(5), hoursSlept: 6.2, quality: 6, bedTime: '00:15', wakeTime: '06:30' },
-    { date: getDateString(4), hoursSlept: 8.0, quality: 9, bedTime: '22:45', wakeTime: '06:45' },
-    { date: getDateString(3), hoursSlept: 7.8, quality: 8, bedTime: '23:00', wakeTime: '06:45' },
-    { date: getDateString(2), hoursSlept: 5.5, quality: 4, bedTime: '01:30', wakeTime: '07:00' },
-    { date: getDateString(1), hoursSlept: 7.2, quality: 7, bedTime: '23:15', wakeTime: '06:30' },
     { date: getDateString(0), hoursSlept: 8.5, quality: 9, bedTime: '22:30', wakeTime: '07:00' },
+    { date: getDateString(2), hoursSlept: 5.5, quality: 4, bedTime: '01:30', wakeTime: '07:00' },
+    { date: getDateString(4), hoursSlept: 8.0, quality: 9, bedTime: '22:45', wakeTime: '06:45' },
   ];
   
-  // Water intake data for the last 7 days
+  // Water intake data for the same 3 days
   export const waterData: WaterData[] = [
-    { date: getDateString(6), glasses: 5, target: 8 },
-    { date: getDateString(5), glasses: 6, target: 8 },
-    { date: getDateString(4), glasses: 8, target: 8 },
-    { date: getDateString(3), glasses: 7, target: 8 },
-    { date: getDateString(2), glasses: 4, target: 8 },
-    { date: getDateString(1), glasses: 6, target: 8 },
     { date: getDateString(0), glasses: 3, target: 8 },
+    { date: getDateString(2), glasses: 4, target: 8 },
+    { date: getDateString(4), glasses: 8, target: 8 },
   ];
   
-  // Mood data for the last 7 days
+  // Mood data for the same 3 days
   export const moodData: MoodData[] = [
-    { date: getDateString(6), mood: 'good', notes: 'Productive day at work' },
-    { date: getDateString(5), mood: 'neutral', notes: 'Feeling a bit tired' },
-    { date: getDateString(4), mood: 'great', notes: 'Amazing day outdoors' },
-    { date: getDateString(3), mood: 'good', notes: 'Good progress on project' },
-    { date: getDateString(2), mood: 'bad', notes: 'Stressed about deadline' },
-    { date: getDateString(1), mood: 'neutral', notes: 'Average day' },
     { date: getDateString(0), mood: 'good', notes: 'Feeling optimistic' },
+    { date: getDateString(2), mood: 'bad', notes: 'Stressed about deadline' },
+    { date: getDateString(4), mood: 'great', notes: 'Amazing day outdoors' },
   ];
   
-  // Activity data for the last 7 days
+  // Activity data for the same 3 days
   export const activityData: ActivityData[] = [
     { 
-      date: getDateString(6), 
-      steps: 8500, 
-      activeMinutes: 45, 
-      workouts: [{ type: 'Running', duration: 30 }] 
-    },
-    { 
-      date: getDateString(5), 
-      steps: 5200, 
-      activeMinutes: 20, 
-      workouts: [] 
-    },
-    { 
-      date: getDateString(4), 
-      steps: 12000, 
-      activeMinutes: 75, 
-      workouts: [{ type: 'Hiking', duration: 60 }, { type: 'Yoga', duration: 15 }] 
-    },
-    { 
-      date: getDateString(3), 
-      steps: 7800, 
-      activeMinutes: 35, 
-      workouts: [{ type: 'Cycling', duration: 25 }] 
+      date: getDateString(0), 
+      steps: 6700, 
+      activeMinutes: 30, 
+      workouts: [{ type: 'Strength Training', duration: 25 }] 
     },
     { 
       date: getDateString(2), 
@@ -83,16 +53,10 @@ import {
       workouts: [] 
     },
     { 
-      date: getDateString(1), 
-      steps: 9200, 
-      activeMinutes: 50, 
-      workouts: [{ type: 'Swimming', duration: 40 }] 
-    },
-    { 
-      date: getDateString(0), 
-      steps: 6700, 
-      activeMinutes: 30, 
-      workouts: [{ type: 'Strength Training', duration: 25 }] 
+      date: getDateString(4), 
+      steps: 12000, 
+      activeMinutes: 75, 
+      workouts: [{ type: 'Hiking', duration: 60 }, { type: 'Yoga', duration: 15 }] 
     },
   ];
   

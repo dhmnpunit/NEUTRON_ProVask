@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,6 +6,7 @@ import {
   ScrollView, 
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '@/constants/colors';
 import { useHealthStore } from '@/store/health-store';
@@ -21,24 +22,106 @@ import {
 import { useRouter } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useAuth } from '@/context/AuthContext';
-import { HealthAssistantButton } from '@/components/HealthAssistantButton';
+import { getJournalEntries } from '@/services/journalService';
+import { JournalEntry, SleepData, WaterData, MoodData, ActivityData } from '@/types/health';
+import { format, parseISO } from 'date-fns';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { 
-    sleepData, 
-    waterData, 
-    moodData, 
-    activityData,
-    userProfile,
-  } = useHealthStore();
+  const { userProfile } = useHealthStore();
   
-  // Get the latest data
-  const latestSleep = sleepData[0];
-  const latestWater = waterData[0];
-  const latestMood = moodData[0];
-  const latestActivity = activityData[0];
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Derived state from journal entries
+  const [sleepData, setSleepData] = useState<SleepData[]>([]);
+  const [waterData, setWaterData] = useState<WaterData[]>([]);
+  const [moodData, setMoodData] = useState<MoodData[]>([]);
+  const [activityData, setActivityData] = useState<ActivityData[]>([]);
+  
+  // Format date consistently for all health data
+  const formatEntryDate = (dateString: string): string => {
+    // Parse the ISO date string
+    const date = parseISO(dateString);
+    // Format as YYYY-MM-DD to match what's expected by HealthTrends
+    return format(date, 'yyyy-MM-dd');
+  };
+  
+  // Fetch journal entries when component mounts
+  useEffect(() => {
+    async function fetchJournalData() {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const entries = await getJournalEntries(user.id);
+        setJournalEntries(entries);
+        
+        // Process entries to extract health data
+        const extractedSleepData: SleepData[] = [];
+        const extractedWaterData: WaterData[] = [];
+        const extractedMoodData: MoodData[] = [];
+        const extractedActivityData: ActivityData[] = [];
+        
+        entries.forEach(entry => {
+          // Use consistent date formatting
+          const date = formatEntryDate(entry.created_at);
+          
+          // Extract sleep data if available
+          if (entry.health_metrics.sleep_quality) {
+            extractedSleepData.push({
+              date,
+              hoursSlept: 8, // This is a placeholder since we don't have actual hours slept
+              quality: entry.health_metrics.sleep_quality,
+              bedTime: '22:00', // Placeholder
+              wakeTime: '06:00', // Placeholder
+            });
+          }
+          
+          // Extract water data if available
+          if (entry.health_metrics.water_glasses) {
+            extractedWaterData.push({
+              date,
+              glasses: entry.health_metrics.water_glasses,
+              target: 8, // Default target
+            });
+          }
+          
+          // Extract mood data if available
+          if (entry.mood) {
+            extractedMoodData.push({
+              date,
+              mood: entry.mood,
+              notes: entry.content,
+            });
+          }
+          
+          // Extract activity data if available
+          if (entry.health_metrics.exercise_minutes) {
+            extractedActivityData.push({
+              date,
+              steps: 6000, // Placeholder since we don't have actual steps
+              activeMinutes: entry.health_metrics.exercise_minutes,
+              workouts: [],
+            });
+          }
+        });
+        
+        // Update state with extracted data
+        setSleepData(extractedSleepData);
+        setWaterData(extractedWaterData);
+        setMoodData(extractedMoodData);
+        setActivityData(extractedActivityData);
+      } catch (error) {
+        console.error('Error fetching journal entries:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchJournalData();
+  }, [user]);
   
   return (
     <ScreenWrapper>
@@ -79,7 +162,19 @@ export default function DashboardScreen() {
           />
         </View>
         
-        <HealthTrends entries={[]} />
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={styles.loadingText}>Loading health data...</Text>
+          </View>
+        ) : (
+          <HealthTrends 
+            sleepData={sleepData}
+            waterData={waterData}
+            moodData={moodData}
+            activityData={activityData}
+          />
+        )}
         
         <View style={styles.recommendationsContainer}>
           <View style={styles.recommendationHeader}>
@@ -112,8 +207,6 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      
-      <HealthAssistantButton showLabel size="medium" />
     </ScreenWrapper>
   );
 }
@@ -149,6 +242,20 @@ const styles = StyleSheet.create({
   },
   logButtonContainer: {
     marginBottom: 16,
+  },
+  loadingContainer: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 120,
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textSecondary,
   },
   recommendationsContainer: {
     backgroundColor: colors.card,
