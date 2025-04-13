@@ -25,7 +25,8 @@ import { AppLogo } from '@/components/AppLogo';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signIn, loading, error } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   
   // Animate on component mount
@@ -114,10 +115,6 @@ export default function LoginScreen() {
                 />
               </View>
             </View>
-
-            {error && (
-              <Text style={styles.errorText}>{error}</Text>
-            )}
 
             <PrimaryButton
               title="Log In"
@@ -232,11 +229,5 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
     fontFamily: fonts.medium,
-  },
-  errorText: {
-    ...typography.caption,
-    color: colors.danger,
-    marginTop: -spacing.md,
-    marginBottom: spacing.md,
   },
 }); 
