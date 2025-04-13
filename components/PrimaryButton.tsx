@@ -7,10 +7,11 @@ import {
   Animated, 
   ActivityIndicator,
   ViewStyle,
-  TextStyle
+  TextStyle,
+  Pressable
 } from 'react-native';
 import { colors } from '@/constants/colors';
-import { typography, spacing, radius, shadows } from '@/constants/design';
+import { typography, spacing, radius, shadows, fonts } from '@/constants/design';
 
 interface PrimaryButtonProps {
   title: string;
@@ -39,95 +40,87 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   fullWidth = false,
   animateOnMount = false,
 }) => {
-  const scaleAnim = useRef(new Animated.Value(animateOnMount ? 0.95 : 1)).current;
-  const fadeAnim = useRef(new Animated.Value(animateOnMount ? 0 : 1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   
   useEffect(() => {
     if (animateOnMount) {
-      Animated.parallel([
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 6,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      scaleAnim.setValue(0.95);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
     }
   }, []);
-  
-  const getButtonStyles = () => {
-    const baseStyles = [
-      styles.button,
-      styles[`${size}Button`],
-      fullWidth && styles.fullWidth,
-      {
-        transform: [{ scale: scaleAnim }],
-        opacity: disabled ? 0.6 : fadeAnim,
-      },
-    ];
-    
-    if (variant === 'primary') {
-      baseStyles.push(styles.primaryButton);
-    } else if (variant === 'secondary') {
-      baseStyles.push(styles.secondaryButton);
-    } else if (variant === 'outline') {
-      baseStyles.push(styles.outlineButton);
-    } else if (variant === 'danger') {
-      baseStyles.push(styles.dangerButton);
-    }
-    
-    return baseStyles;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
   };
-  
-  const getTextStyles = () => {
-    const baseStyles = [
-      styles.text,
-      styles[`${size}Text`],
-    ];
-    
-    if (variant === 'primary') {
-      baseStyles.push(styles.primaryText);
-    } else if (variant === 'secondary') {
-      baseStyles.push(styles.secondaryText);
-    } else if (variant === 'outline') {
-      baseStyles.push(styles.outlineText);
-    } else if (variant === 'danger') {
-      baseStyles.push(styles.dangerText);
-    }
-    
-    return baseStyles;
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
   };
-  
+
+  const buttonStyles = [
+    styles.button,
+    styles[`${size}Button`],
+    variant === 'primary' && styles.primaryButton,
+    variant === 'secondary' && styles.secondaryButton,
+    variant === 'outline' && styles.outlineButton,
+    variant === 'danger' && styles.dangerButton,
+    fullWidth && styles.fullWidth,
+    style,
+  ];
+
+  const textStyles = [
+    styles.text,
+    styles[`${size}Text`],
+    variant === 'primary' && styles.primaryText,
+    variant === 'secondary' && styles.secondaryText,
+    variant === 'outline' && styles.outlineText,
+    variant === 'danger' && styles.dangerText,
+    textStyle,
+  ];
+
+  const animatedStyle = {
+    transform: [{ scale: scaleAnim }],
+    opacity: disabled ? 0.6 : 1,
+  };
+
   return (
-    <Animated.View style={getButtonStyles()}>
-      <TouchableOpacity
+    <Animated.View style={[buttonStyles, animatedStyle]}>
+      <Pressable
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled || loading}
-        activeOpacity={0.8}
-        style={[styles.touchable, style]}
+        style={styles.pressable}
       >
         <View style={styles.contentContainer}>
           {loading ? (
             <ActivityIndicator 
               color={variant === 'outline' ? colors.primary : '#FFFFFF'} 
-              size="small" 
-              style={styles.loader}
+              size="small"
             />
           ) : (
             <>
               {icon && <View style={styles.iconContainer}>{icon}</View>}
-              <Text style={[...getTextStyles(), textStyle]}>
-                {title}
-              </Text>
+              <Text style={textStyles}>{title}</Text>
             </>
           )}
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </Animated.View>
   );
 };
@@ -138,7 +131,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadows.small,
   },
-  touchable: {
+  pressable: {
     width: '100%',
     height: '100%',
   },
@@ -146,7 +139,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     height: '100%',
   },
   primaryButton: {
@@ -177,7 +170,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   text: {
-    fontWeight: '600',
+    fontFamily: fonts.medium,
     textAlign: 'center',
   },
   primaryText: {
@@ -193,20 +186,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   smallText: {
-    ...typography.caption,
     fontSize: 14,
   },
   mediumText: {
-    ...typography.body,
+    fontSize: 16,
   },
   largeText: {
-    ...typography.body,
     fontSize: 18,
   },
   iconContainer: {
     marginRight: spacing.sm,
-  },
-  loader: {
-    marginHorizontal: spacing.xs,
   },
 }); 
