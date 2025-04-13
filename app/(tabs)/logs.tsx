@@ -115,29 +115,11 @@ export default function LogsScreen() {
     return true;
   });
   
-  // Create floating action button
-  const FloatingActionButton = () => (
-    <TouchableOpacity 
-      style={styles.fab}
-      onPress={() => router.push('/logs/add')}
-    >
-      <Plus size={24} color="#FFFFFF" />
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
       <ScreenHeader 
-        title="Journal"
+        title="journal"
         elevated
-        rightActions={(
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => router.push('/logs/add')}
-          >
-            <Plus size={iconSizes.medium} color={colors.primary} />
-          </TouchableOpacity>
-        )}
       />
       
       <View style={styles.searchContainer}>
@@ -272,8 +254,6 @@ export default function LogsScreen() {
           )}
         </ScrollView>
       )}
-      
-      {!loading && filteredEntries.length > 0 && <FloatingActionButton />}
     </View>
   );
 }
@@ -282,14 +262,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.circle,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: `${colors.primary}10`,
   },
   searchContainer: {
     paddingHorizontal: spacing.md,
@@ -344,18 +316,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: spacing.lg,
-    right: spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: radius.circle,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.medium,
   },
   filterOptionsContainer: {
     position: 'absolute',
