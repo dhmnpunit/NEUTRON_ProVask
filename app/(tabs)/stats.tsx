@@ -13,7 +13,7 @@ import { AiInsightBanner } from '@/components/AiInsightBanner';
 import { format, parseISO, subDays } from 'date-fns';
 import { SafeAreaView } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { SleepData, WaterData, MoodData, ActivityData } from '@/types/health';
+import { SleepData, WaterData, MoodData, ActivityData, JournalEntry } from '@/types/health';
 
 // Regular expression to validate UUID format
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -37,6 +37,7 @@ const Stats = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'insights'>('overview');
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actualJournalCount, setActualJournalCount] = useState<number>(0);
 
   // Fetch real data from Supabase
   useEffect(() => {
@@ -74,6 +75,9 @@ const Stats = () => {
           console.error('Error fetching journal entries:', entriesError);
           setError(`Error loading journal data: ${entriesError.message}`);
         } else if (entriesData) {
+          // Set actual journal entries count
+          setActualJournalCount(entriesData.length);
+          
           // Process entries to extract health metrics
           const today = new Date();
           const last30Days = [];
@@ -82,16 +86,12 @@ const Stats = () => {
             last30Days.push(format(subDays(today, i), 'yyyy-MM-dd'));
           }
           
-          // Clear existing data to avoid duplicates
-          // Note: In a real implementation, we'd want a more sophisticated approach
-          // that doesn't lose user data but for now this will clear duplicates
-          
-          // Process to sleep data
+          // Don't use mock data, only use actual data from database
           const extractedSleepData: SleepData[] = [];
           const extractedWaterData: WaterData[] = [];
           const extractedMoodData: MoodData[] = [];
           const extractedActivityData: ActivityData[] = [];
-          
+
           // Process entries to extract metrics
           entriesData.forEach(entry => {
             const entryDate = format(parseISO(entry.created_at), 'yyyy-MM-dd');
@@ -125,34 +125,38 @@ const Stats = () => {
               });
             }
             
-            // Extract activity data
+            // Extract activity data - only if we have exercise minutes data
             if (entry.health_metrics?.exercise_minutes) {
               extractedActivityData.push({
                 date: entryDate,
-                steps: entry.health_metrics.exercise_minutes * 100, // Estimate steps from minutes
+                steps: 0, // We don't collect steps data
                 activeMinutes: entry.health_metrics.exercise_minutes,
                 workouts: [{
-                  type: 'Walking',
+                  type: 'Exercise',
                   duration: entry.health_metrics.exercise_minutes
                 }]
               });
             }
           });
           
-          // Add extracted data to store if we have real data
+          // Only use extracted data from the database, not mock data
           if (extractedSleepData.length > 0) {
+            // Replace store sleep data with actual data
             extractedSleepData.forEach(data => addSleepData(data));
           }
           
           if (extractedWaterData.length > 0) {
+            // Replace store water data with actual data
             extractedWaterData.forEach(data => addWaterData(data));
           }
           
           if (extractedMoodData.length > 0) {
+            // Replace store mood data with actual data
             extractedMoodData.forEach(data => addMoodData(data));
           }
           
           if (extractedActivityData.length > 0) {
+            // Replace store activity data with actual data
             extractedActivityData.forEach(data => addActivityData(data));
           }
         }
@@ -237,7 +241,7 @@ const Stats = () => {
     const avgSleepHours = getAverageMetric(sleepData.slice(0, 7), 'hoursSlept');
     const avgSleepQuality = getAverageMetric(sleepData.slice(0, 7), 'quality');
     const avgWaterIntake = getAverageMetric(waterData.slice(0, 7), 'glasses');
-    const avgSteps = getAverageMetric(activityData.slice(0, 7), 'steps');
+    const avgActivityMinutes = getAverageMetric(activityData.slice(0, 7), 'activeMinutes');
     
     // Count mood distributions
     const moodCounts = {
@@ -268,8 +272,8 @@ const Stats = () => {
     // Water score (0-20)
     const waterScore = Math.min(avgWaterIntake / 8 * 20, 20);
     
-    // Activity score (0-30)
-    const activityScore = Math.min(avgSteps / 10000 * 30, 30);
+    // Activity score (0-30) - based on active minutes instead of steps
+    const activityScore = Math.min(avgActivityMinutes / 30 * 30, 30);
     
     // Combine scores
     const totalScore = sleepScore + waterScore + activityScore + moodScore;
@@ -322,12 +326,12 @@ const Stats = () => {
     }
     
     // Check physical activity
-    const avgSteps = getAverageMetric(activityData.slice(0, 7), 'steps');
-    if (avgSteps < 3000) {
+    const avgActivityMinutes = getAverageMetric(activityData.slice(0, 7), 'activeMinutes');
+    if (avgActivityMinutes < 20) {
       warnings.push({
         title: 'Low Activity Warning',
-        description: 'Your average daily step count is significantly below the recommended level of 7,500-10,000 steps.',
-        action: 'Try incorporating short walks throughout your day or set activity reminders.'
+        description: 'Your average daily activity of ' + avgActivityMinutes + ' minutes is below recommended levels.',
+        action: 'Try incorporating short exercise sessions throughout your day.'
       });
     }
     
@@ -387,11 +391,11 @@ const Stats = () => {
                 <Text style={styles.statLabel}>Avg. Water (glasses)</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{getAverageMetric(activityData.slice(0, 7), 'steps').toLocaleString()}</Text>
-                <Text style={styles.statLabel}>Avg. Steps</Text>
+                <Text style={styles.statValue}>{getAverageMetric(activityData.slice(0, 7), 'activeMinutes')}</Text>
+                <Text style={styles.statLabel}>Avg. Exercise (min)</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{journalEntries.length}</Text>
+                <Text style={styles.statValue}>{actualJournalCount}</Text>
                 <Text style={styles.statLabel}>Journal Entries</Text>
               </View>
             </View>
