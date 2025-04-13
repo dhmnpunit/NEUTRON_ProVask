@@ -17,12 +17,24 @@ import {
   waterData as mockWaterData, 
   moodData as mockMoodData, 
   activityData as mockActivityData,
-  journalEntries as mockJournalEntries,
+  mockJournalEntries,
   healthGoals as mockHealthGoals,
   achievements as mockAchievements,
   userProfile as mockUserProfile,
   healthChallenges as mockHealthChallenges
 } from '@/mocks/health-data';
+
+// New Task interface for the flip dice challenges
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  coins: number;
+  completed: boolean;
+  createdAt: string;
+  completedAt?: string;
+}
 
 interface HealthState {
   // User data
@@ -45,6 +57,9 @@ interface HealthState {
   healthChallenges: HealthChallenge[];
   currentChallenge: HealthChallenge | null;
   
+  // Tasks from flip dice
+  tasks: Task[];
+  
   // Actions
   addSleepData: (data: SleepData) => void;
   addWaterData: (data: WaterData) => void;
@@ -57,6 +72,12 @@ interface HealthState {
   rollNewChallenge: (category?: string) => void;
   completeChallenge: () => void;
   updateUserProfile: (updates: Partial<UserProfile>) => void;
+  
+  // New task functions
+  addTask: (task: Omit<Task, 'completedAt'>) => void;
+  completeTask: (id: string) => void;
+  deleteTask: (id: string) => void;
+  updateHealthCoins: (amount: number) => void;
 }
 
 export const useHealthStore = create<HealthState>()(
@@ -73,6 +94,7 @@ export const useHealthStore = create<HealthState>()(
       achievements: mockAchievements,
       healthChallenges: mockHealthChallenges,
       currentChallenge: null,
+      tasks: [],
       
       // Actions
       addSleepData: (data) => set((state) => ({
@@ -151,6 +173,46 @@ export const useHealthStore = create<HealthState>()(
         userProfile: {
           ...state.userProfile,
           ...updates
+        }
+      })),
+      
+      // New task functions
+      addTask: (task) => set((state) => ({
+        tasks: [task, ...state.tasks]
+      })),
+      
+      completeTask: (id) => set((state) => {
+        const taskToComplete = state.tasks.find(task => task.id === id);
+        
+        if (!taskToComplete) return state;
+        
+        const updatedTasks = state.tasks.map(task => 
+          task.id === id ? { 
+            ...task, 
+            completed: true, 
+            completedAt: new Date().toISOString() 
+          } : task
+        );
+        
+        return {
+          tasks: updatedTasks,
+          userProfile: {
+            ...state.userProfile,
+            healthCoins: state.userProfile.healthCoins + (taskToComplete.coins || 0),
+            streak: state.userProfile.streak + 1,
+            experience: state.userProfile.experience + ((taskToComplete.coins || 0) * 5)
+          }
+        };
+      }),
+      
+      deleteTask: (id) => set((state) => ({
+        tasks: state.tasks.filter(task => task.id !== id)
+      })),
+      
+      updateHealthCoins: (amount) => set((state) => ({
+        userProfile: {
+          ...state.userProfile,
+          healthCoins: state.userProfile.healthCoins + amount
         }
       })),
     }),

@@ -57,8 +57,8 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [insights, setInsights] = useState<string[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [isLoadingInsights, setIsLoadingInsights] = useState(true);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const { user } = useAuth();
   const [showApiKeyNotice, setShowApiKeyNotice] = useState(false);
@@ -66,21 +66,36 @@ export default function ChatScreen() {
   // Load chat history and insights when component mounts
   useEffect(() => {
     if (user) {
+      console.log('User authenticated, loading data...');
+      // Set loading state before fetching data
+      setIsLoadingHistory(true);
       loadChatHistory();
       loadPersonalizedInsights();
+    } else {
+      console.log('No user found, cannot load chat history');
+      // Ensure loading state is reset if no user
+      setIsLoadingHistory(false);
     }
   }, [user]);
   
+  // Monitor loading state changes
+  useEffect(() => {
+    console.log('Loading history state changed:', isLoadingHistory);
+  }, [isLoadingHistory]);
+
   // Load personalized insights based on user data
   const loadPersonalizedInsights = async () => {
     if (!user) return;
     
     try {
+      console.log('Loading personalized insights for user:', user.id);
       setIsLoadingInsights(true);
       const userInsights = await getPersonalizedInsights(user.id);
-      setInsights(userInsights);
+      console.log('Insights loaded, count:', userInsights?.length || 0);
+      setInsights(userInsights || []);
     } catch (error) {
       console.error('Failed to load personalized insights:', error);
+      setInsights([]);
     } finally {
       setIsLoadingInsights(false);
     }
@@ -89,6 +104,7 @@ export default function ChatScreen() {
   // Check if API key is configured
   useEffect(() => {
     const apiKey = Constants.expoConfig?.extra?.geminiApiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+    console.log('API Key available:', !!apiKey);
     if (!apiKey || apiKey === 'your_gemini_api_key_here') {
       setShowApiKeyNotice(true);
     }
@@ -98,8 +114,18 @@ export default function ChatScreen() {
     if (!user) return;
     
     try {
-      setIsLoading(true);
+      console.log('Loading chat history for user:', user.id);
+      setIsLoadingHistory(true);
       const chatHistory = await getChatHistory(user.id);
+      console.log('Chat history loaded, message count:', chatHistory?.length || 0);
+      
+      // If chat history is empty, show initial message
+      if (!chatHistory || chatHistory.length === 0) {
+        console.log('No chat history found, showing initial message');
+        setMessages(initialMessages);
+        setIsLoadingHistory(false);
+        return;
+      }
       
       // Convert ChatMessage objects to local Message format
       const formattedMessages: Message[] = chatHistory.map((msg) => ({
@@ -114,8 +140,10 @@ export default function ChatScreen() {
       setMessages(formattedMessages);
     } catch (error) {
       console.error('Error loading chat history:', error);
+      // Fall back to initial message on error
+      setMessages(initialMessages);
     } finally {
-      setIsLoading(false);
+      setIsLoadingHistory(false);
     }
   };
 
@@ -201,6 +229,7 @@ export default function ChatScreen() {
   };
 
   if (isLoadingHistory) {
+    console.log('Rendering loading screen for chat history');
     return (
       <ScreenWrapper>
         <View style={styles.loadingHistoryContainer}>
@@ -210,6 +239,8 @@ export default function ChatScreen() {
       </ScreenWrapper>
     );
   }
+
+  console.log('Rendering main chat UI with', messages.length, 'messages');
 
   return (
     <ScreenWrapper>

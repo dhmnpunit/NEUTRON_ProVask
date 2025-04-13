@@ -1,9 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { HomeIcon, BookOpenIcon, ChatBubbleLeftRightIcon } from 'react-native-heroicons/outline';
+import { HomeIcon, BookOpenIcon, ChatBubbleLeftRightIcon, CubeIcon } from 'react-native-heroicons/outline';
 import { View, Platform, StatusBar, StyleSheet } from 'react-native';
-import { BarChart3, Dices } from 'lucide-react-native';
 import { fonts } from "@/constants/design";
 
 const TabBarBackground = () => {
@@ -89,6 +88,16 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="flip-dice"
+          options={{
+            title: 'Flip Dice',
+            tabBarLabel: 'Challenges',
+            tabBarIcon: ({ color, size }) => (
+              <CubeIcon size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="chat"
           options={{
             title: 'Assistant',
@@ -96,20 +105,6 @@ export default function TabLayout() {
             tabBarIcon: ({ color, size }) => (
               <ChatBubbleLeftRightIcon size={size} color={color} />
             ),
-          }}
-        />
-        <Tabs.Screen
-          name="stats"
-          options={{
-            title: 'Stats',
-            tabBarIcon: ({ color }) => <BarChart3 size={24} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="dice"
-          options={{
-            title: 'Dice',
-            tabBarIcon: ({ color }) => <Dices size={24} color={color} />,
           }}
         />
       </Tabs>

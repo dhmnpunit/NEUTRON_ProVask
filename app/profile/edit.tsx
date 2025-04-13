@@ -9,14 +9,17 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { colors } from '@/constants/colors';
+import { fonts } from '@/constants/design';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, Stack } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { updateUserProfile } from '@/services/profileService';
-import { UserIcon, EnvelopeIcon } from 'react-native-heroicons/outline';
+import { UserIcon, EnvelopeIcon, ArrowLeftIcon } from 'react-native-heroicons/outline';
+import { PrimaryButton } from '@/components/PrimaryButton';
 
 export default function EditProfileScreen() {
   const { user } = useAuth();
@@ -50,23 +53,22 @@ export default function EditProfileScreen() {
         options={{
           title: "Edit Profile",
           headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '700',
+            fontSize: 18,
+            fontFamily: fonts.headingSemiBold,
             color: colors.text,
           },
+          headerLeft: () => (
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeftIcon size={24} color={colors.text} />
+            </TouchableOpacity>
+          ),
           headerShadowVisible: false,
           headerStyle: {
             backgroundColor: colors.background,
           },
-          headerRight: () => (
-            <TouchableOpacity 
-              style={[styles.saveButton, loading && styles.disabledButton]}
-              onPress={handleSave}
-              disabled={loading}
-            >
-              <Text style={styles.saveButtonText}>Save</Text>
-            </TouchableOpacity>
-          ),
         }} 
       />
 
@@ -77,8 +79,9 @@ export default function EditProfileScreen() {
         <ScrollView 
           style={styles.content}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.profileCard}>
+          <View style={styles.profileImageContainer}>
             <Image 
               source={{ 
                 uri: user?.user_metadata?.avatar_url || 
@@ -86,40 +89,57 @@ export default function EditProfileScreen() {
               }}
               style={styles.profileImage}
             />
+            <TouchableOpacity style={styles.changePhotoButton}>
+              <Text style={styles.changePhotoText}>Change Photo</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Personal Information</Text>
-            <View style={styles.inputCard}>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIconContainer}>
-                  <UserIcon size={20} color={colors.primary} />
+            <View style={styles.formContainer}>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Full Name</Text>
+                <View style={styles.inputContainer}>
+                  <UserIcon size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your name"
+                    placeholderTextColor={colors.textSecondary}
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                  />
                 </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your name"
-                  placeholderTextColor={colors.textSecondary}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
               </View>
             </View>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Account Information</Text>
-            <View style={styles.infoCard}>
-              <View style={styles.infoItem}>
-                <View style={styles.infoIconContainer}>
-                  <EnvelopeIcon size={20} color={colors.textSecondary} />
+            <View style={styles.formContainer}>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Email Address</Text>
+                <View style={styles.inputContainerDisabled}>
+                  <EnvelopeIcon size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <Text style={styles.disabledText}>{user?.email}</Text>
                 </View>
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>{user?.email}</Text>
-                </View>
+                <Text style={styles.helpText}>Email cannot be changed</Text>
               </View>
             </View>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            {loading ? (
+              <View style={styles.loadingButton}>
+                <ActivityIndicator color="white" size="small" />
+              </View>
+            ) : (
+              <PrimaryButton
+                title="Save Changes"
+                onPress={handleSave}
+                fullWidth
+              />
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -128,39 +148,23 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  saveButton: {
+  headerButton: {
     padding: 8,
-    marginRight: 8,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  disabledButton: {
-    opacity: 0.5,
+    marginLeft: 8,
   },
   container: {
     flex: 1,
   },
   content: {
     flex: 1,
-    padding: 16,
   },
-  profileCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  profileImageContainer: {
     alignItems: 'center',
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 32,
   },
   profileImage: {
     width: 120,
@@ -168,88 +172,92 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     borderWidth: 3,
     borderColor: colors.primary,
+    marginBottom: 12,
+  },
+  changePhotoButton: {
+    marginTop: 8,
+  },
+  changePhotoText: {
+    color: colors.primary,
+    fontFamily: fonts.medium,
+    fontSize: 16,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontFamily: fonts.headingSemiBold,
+    color: colors.text,
     marginBottom: 12,
-    marginLeft: 4,
   },
-  inputCard: {
+  formContainer: {
     backgroundColor: colors.card,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  },
+  inputWrapper: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    backgroundColor: colors.inputBackground || colors.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
   },
-  inputIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary + '20',
-    justifyContent: 'center',
+  inputContainerDisabled: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    backgroundColor: colors.disabledBackground || colors.border + '50',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  inputIcon: {
+    marginHorizontal: 12,
   },
   input: {
     flex: 1,
-    fontSize: 16,
     color: colors.text,
-    paddingVertical: 8,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingRight: 12,
   },
-  infoCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  infoIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.textSecondary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  infoContent: {
+  disabledText: {
     flex: 1,
-  },
-  infoLabel: {
-    fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  infoValue: {
+    fontFamily: fonts.regular,
     fontSize: 16,
-    color: colors.text,
-    fontWeight: '500',
+    paddingVertical: 12,
+    paddingRight: 12,
+  },
+  helpText: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.textSecondary,
+    marginTop: 8,
+  },
+  buttonContainer: {
+    marginTop: 16,
+  },
+  loadingButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }); 
