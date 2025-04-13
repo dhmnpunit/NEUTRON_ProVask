@@ -200,7 +200,7 @@ export default function AddJournalEntryScreen() {
   ) => (
     <View style={styles.metricContainer}>
       <View style={styles.metricLabelContainer}>
-        <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={styles.metricLabel}>{label}</Text>
         <Text style={styles.metricValue}>{value}/7</Text>
       </View>
       <View style={styles.sliderContainer}>
@@ -276,45 +276,45 @@ export default function AddJournalEntryScreen() {
       >
         <ScrollView style={styles.scrollView}>
           <Text style={styles.sectionTitle}>Mood</Text>
-          <View style={styles.moodContainer}>
-            {renderMoodOption('terrible', '😫', 'Terrible')}
-            {renderMoodOption('bad', '🙁', 'Bad')}
-            {renderMoodOption('neutral', '😐', 'Neutral')}
-            {renderMoodOption('good', '🙂', 'Good')}
-            {renderMoodOption('great', '😄', 'Great')}
+            <View style={styles.moodContainer}>
+              {renderMoodOption('terrible', '😫', 'Terrible')}
+              {renderMoodOption('bad', '🙁', 'Bad')}
+              {renderMoodOption('neutral', '😐', 'Neutral')}
+              {renderMoodOption('good', '🙂', 'Good')}
+              {renderMoodOption('great', '😄', 'Great')}
           </View>
 
-          <Text style={styles.sectionTitle}>Journal Entry</Text>
-          <TextInput
-            style={styles.contentInput}
-            placeholder="Write about your day, health, thoughts..."
-            placeholderTextColor={colors.textTertiary}
-            multiline
-            value={content}
-            onChangeText={setContent}
+            <Text style={styles.sectionTitle}>Journal Entry</Text>
+            <TextInput
+              style={styles.contentInput}
+              placeholder="Write about your day, health, thoughts..."
+              placeholderTextColor={colors.textTertiary}
+              multiline
+              value={content}
+              onChangeText={setContent}
             textAlignVertical="top"
-          />
+            />
 
-          <Text style={styles.sectionTitle}>Health Metrics</Text>
-          
-          {renderMetricSelector(
-            'Sleep Quality',
-            healthMetrics.sleep_quality,
+            <Text style={styles.sectionTitle}>Health Metrics</Text>
+            
+            {renderMetricSelector(
+              'Sleep Quality',
+              healthMetrics.sleep_quality,
             (value) => setHealthMetrics({...healthMetrics, sleep_quality: value}),
             colors.sleep
-          )}
+            )}
 
-          {renderMetricSelector(
-            'Mental Clarity',
-            healthMetrics.mental_clarity,
-            (value) => setHealthMetrics({...healthMetrics, mental_clarity: value})
-          )}
+            {renderMetricSelector(
+              'Mental Clarity',
+              healthMetrics.mental_clarity,
+              (value) => setHealthMetrics({...healthMetrics, mental_clarity: value})
+            )}
 
-          {renderMetricSelector(
-            'Energy Level',
-            healthMetrics.energy_level,
-            (value) => setHealthMetrics({...healthMetrics, energy_level: value})
-          )}
+            {renderMetricSelector(
+              'Energy Level',
+              healthMetrics.energy_level,
+              (value) => setHealthMetrics({...healthMetrics, energy_level: value})
+            )}
 
           <View style={styles.metricContainer}>
             <View style={styles.metricLabelContainer}>
@@ -471,17 +471,17 @@ export default function AddJournalEntryScreen() {
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Symptoms (if any)</Text>
-          <TouchableOpacity 
-            style={styles.symptomPickerButton}
+            <Text style={styles.sectionTitle}>Symptoms (if any)</Text>
+            <TouchableOpacity 
+              style={styles.symptomPickerButton}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setShowSymptomPicker(true);
             }}
-          >
-            <Text style={styles.symptomPickerText}>Select Symptom</Text>
+            >
+              <Text style={styles.symptomPickerText}>Select Symptom</Text>
             <PlusIcon size={20} color={colors.primary} />
-          </TouchableOpacity>
+            </TouchableOpacity>
 
           {symptoms.length > 0 ? (
             <View style={styles.tagsContainer}>
