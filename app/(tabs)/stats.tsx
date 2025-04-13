@@ -18,6 +18,11 @@ import { SleepData, WaterData, MoodData, ActivityData, JournalEntry } from '@/ty
 // Regular expression to validate UUID format
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Helper function to validate UUID
+const isValidUUID = (id: string | undefined | null): boolean => {
+  return !!id && UUID_REGEX.test(id);
+};
+
 const Stats = () => {
   const { 
     sleepData, 
@@ -38,6 +43,7 @@ const Stats = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actualJournalCount, setActualJournalCount] = useState<number>(0);
+  const [actualUserId, setActualUserId] = useState<string | null>(null);
 
   // Fetch real data from Supabase
   useEffect(() => {
@@ -57,12 +63,15 @@ const Stats = () => {
         }
         
         // Validate the UUID format
-        if (!UUID_REGEX.test(userId)) {
+        if (!isValidUUID(userId)) {
           console.error('Invalid UUID format for user ID:', userId);
-          setError('Invalid user ID format. Please log out and log in again.');
+          setError('User ID format not recognized. Using sample data instead.');
           setDataLoading(false);
           return;
         }
+        
+        // Store the valid UUID for later use
+        setActualUserId(userId);
         
         // Fetch journal entries that contain health metrics
         const { data: entriesData, error: entriesError } = await supabase
@@ -96,7 +105,7 @@ const Stats = () => {
           entriesData.forEach(entry => {
             const entryDate = format(parseISO(entry.created_at), 'yyyy-MM-dd');
             
-            // Extract sleep data
+            // Extract sleep data if available
             if (entry.health_metrics?.sleep_quality) {
               extractedSleepData.push({
                 date: entryDate,
@@ -107,7 +116,7 @@ const Stats = () => {
               });
             }
             
-            // Extract water data
+            // Extract water data if available
             if (entry.health_metrics?.water_glasses) {
               extractedWaterData.push({
                 date: entryDate,
@@ -116,7 +125,7 @@ const Stats = () => {
               });
             }
             
-            // Extract mood data
+            // Extract mood data if available
             if (entry.mood) {
               extractedMoodData.push({
                 date: entryDate,
@@ -162,7 +171,7 @@ const Stats = () => {
         }
       } catch (error) {
         console.error('Error fetching real health data:', error);
-        setError('Error loading health data. Please try again later.');
+        setError('Error loading health data. Using sample data instead.');
       } finally {
         setDataLoading(false);
       }
@@ -180,21 +189,27 @@ const Stats = () => {
         
         setLoading(true);
         
+        // If we have a valid user ID from the database, use that instead of the profile ID
+        const idToUse = actualUserId || userProfile.id;
+        
         // Validate the user ID format for insights
-        if (!userProfile.id || !UUID_REGEX.test(userProfile.id)) {
-          console.error('Invalid UUID format for insights', userProfile.id);
+        if (!isValidUUID(idToUse)) {
+          console.error('Invalid UUID format for insights', idToUse);
           // Use fallback insights
           setInsights([
             "Based on your recent logs, maintaining consistent sleep patterns may help improve your energy levels.",
             "Your mood tends to be better on days with higher activity levels. Consider adding short walks to your routine.",
-            "Increasing water intake could help with the mental clarity issues you've mentioned in your journal."
+            "Increasing water intake could help with the mental clarity issues you've mentioned in your journal.",
+            "Creating a consistent bedtime routine may help improve your sleep quality over time.",
+            "Short mindfulness breaks during your day can help manage the stress patterns visible in your entries."
           ]);
           setLoading(false);
           return;
         }
         
-        // Use the user's ID from the profile
-        const userInsights = await getPersonalizedInsights(userProfile.id);
+        // Use the valid UUID for insights
+        console.log('Using valid UUID for insights:', idToUse);
+        const userInsights = await getPersonalizedInsights(idToUse);
         setInsights(userInsights);
       } catch (error) {
         console.error('Error fetching insights:', error);
@@ -202,7 +217,9 @@ const Stats = () => {
         setInsights([
           "Regular sleep schedules can improve overall health and energy levels.",
           "Aim to stay hydrated with at least 8 glasses of water daily.",
-          "Adding just 30 minutes of light exercise daily can significantly improve your mood and health."
+          "Adding just 30 minutes of light exercise daily can significantly improve your mood and health.",
+          "Consistent meal times can help regulate your energy levels throughout the day.",
+          "Brief stretching sessions can alleviate tension and improve your overall physical comfort."
         ]);
       } finally {
         setLoading(false);
@@ -212,7 +229,7 @@ const Stats = () => {
     if (!dataLoading) {
       loadInsights();
     }
-  }, [userProfile.id, dataLoading]);
+  }, [userProfile.id, dataLoading, actualUserId]);
 
   const getAverageMetric = (data: any[], metricKey: string): number => {
     if (!data || data.length === 0) return 0;
@@ -415,15 +432,6 @@ const Stats = () => {
                   No early warning signs detected. Keep up the good work!
                 </Text>
               </View>
-            )}
-
-            <Text style={styles.sectionTitle}>AI Health Insights</Text>
-            {loading ? (
-              <ActivityIndicator size="large" color={colors.primary} />
-            ) : (
-              insights.slice(0, 3).map((insight, index) => (
-                <AiInsightBanner key={index} message={insight} />
-              ))
             )}
           </>
         );
