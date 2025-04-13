@@ -5,6 +5,8 @@ import { colors } from '@/constants/colors';
 interface DataPoint {
   value: number;
   label: string;
+  date: string;
+  exists?: boolean; // Add this to track if data exists for this day
 }
 
 interface ProgressChartProps {
@@ -25,7 +27,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
   unit = '',
 }) => {
   // Calculate the maximum value for scaling
-  const calculatedMax = maxValue || Math.max(...data.map(d => d.value)) * 1.2;
+  const calculatedMax = maxValue || Math.max(...data.map(d => d.value), 0.1) * 1.2;
   
   return (
     <View style={styles.container}>
@@ -34,20 +36,22 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
       <View style={styles.chartContainer}>
         {data.map((point, index) => {
           const barHeight = (point.value / calculatedMax) * 150;
+          const hasData = point.exists !== false; // If exists is undefined or true, we have data
           
           return (
             <View key={index} style={styles.barContainer}>
-              <Text style={styles.barValue}>
-                {point.value}{unit}
+              <Text style={[styles.barValue, !hasData && styles.noDataValue]}>
+                {hasData ? `${point.value}${unit}` : '-'}
               </Text>
               <View style={styles.barWrapper}>
                 <View 
                   style={[
                     styles.bar, 
                     { 
-                      height: barHeight, 
-                      backgroundColor: color,
-                    }
+                      height: hasData ? Math.max(barHeight, 4) : 0,
+                      backgroundColor: hasData ? color : colors.divider,
+                    },
+                    !hasData && styles.noDataBar
                   ]} 
                 />
               </View>
@@ -93,6 +97,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 4,
   },
+  noDataValue: {
+    color: colors.divider,
+  },
   barWrapper: {
     height: 150,
     justifyContent: 'flex-end',
@@ -101,6 +108,13 @@ const styles = StyleSheet.create({
     width: 8,
     borderRadius: 4,
     minHeight: 4,
+  },
+  noDataBar: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.divider,
+    backgroundColor: 'transparent',
+    height: 4,
   },
   barLabel: {
     fontSize: 10,
